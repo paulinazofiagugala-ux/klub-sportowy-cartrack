@@ -2,19 +2,48 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Ranking: każda zalogowana osoba widzi wszystkich,
-    // ale zapisuje i usuwa wyłącznie własny dokument.
+    function signedIn() { return request.auth != null; }
+    function isSuperAdmin() {
+      return signedIn() && request.auth.token.email == 'paulinazofiagugala@gmail.com'
+        && request.auth.token.email_verified == true;
+    }
+    function isAdmin() {
+      return isSuperAdmin() || (signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+    }
+
+    // Profile i treningi: każda zalogowana osoba widzi wszystkich,
+    // ale zapisuje wyłącznie własny dokument. Administrator może usunąć profil.
     match /people/{uid} {
-      allow read: if request.auth != null;
-      allow create, update: if request.auth != null
+      allow read: if signedIn();
+      allow create, update: if signedIn()
         && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['nick', 'entries'])
+        && request.resource.data.keys().hasOnly(['nick', 'dept', 'entries', 'goals'])
         && request.resource.data.nick is string
         && request.resource.data.nick.size() > 0
         && request.resource.data.nick.size() <= 24
         && request.resource.data.entries is list
-        && request.resource.data.entries.size() <= 1500;
-      allow delete: if request.auth != null && request.auth.uid == uid;
+        && request.resource.data.entries.size() <= 1500
+        && (!('dept' in request.resource.data) || (request.resource.data.dept is string && request.resource.data.dept.size() <= 60))
+        && (!('goals' in request.resource.data) || (request.resource.data.goals is list && request.resource.data.goals.size() <= 50));
+      allow delete: if signedIn() && (request.auth.uid == uid || isAdmin());
+    }
+
+    // Wyzwania, cele klubu i wirtualne biegi: czytają wszyscy, tworzą administratorzy.
+    match /challenges/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // Ustawienia klubu (np. lista działów).
+    match /config/{docId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // Lista administratorów.
+    match /admins/{uid} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
     }
 
     // Wszystko inne jest zablokowane.

@@ -1,11 +1,20 @@
 # Klub Sportowy Cartrack
 
-Klubowy ranking dystansu i kalorii. Każda osoba loguje się kontem Google, dodaje swoje treningi i widzi podium, statystyki oraz rekordy klubu.
+Klubowa aplikacja sportowa: rankingi, wyzwania, cele, kalendarz, serie i odznaki. Uczestnicy logują się kontem Google albo e-mailem i hasłem.
 
 **Adres aplikacji:** https://paulinazofiagugala-ux.github.io/klub-sportowy-cartrack/
 
 - Strona jest hostowana za darmo na GitHub Pages (to repozytorium).
 - Logowanie i baza danych działają na Firebase, projekt `cartrack-move-app`, plan Spark (darmowy).
+
+## Co potrafi
+
+- **Ranking:** tydzień, miesiąc albo cały czas; według dystansu, kalorii, liczby treningów lub czasu; filtr rodzaju aktywności ze średnim tempem.
+- **Dodawanie treningu:** ręcznie (czas z dokładnością do setnych sekundy) albo z pliku GPX, TCX lub FIT. Rodzaj aktywności jest rozpoznawany z pliku albo z tempa.
+- **Wyzwania:** cel klubu (np. 1000 km w październiku), wyzwanie firmowe, wyzwanie działowe i wirtualny bieg na dystans. Tworzą je administratorzy.
+- **Kalendarz:** własne treningi albo treningi całego klubu oraz trwające wyzwania.
+- **Moje:** seria tygodni z treningiem, cele osobiste, odznaki, średnie tempo, lista treningów i profil z działem.
+- **Panel administratora** (zakładka Moje): lista działów i nadawanie uprawnień administratora.
 
 ## Instalacja na telefonie i komputerze
 
@@ -13,23 +22,18 @@ Klubowy ranking dystansu i kalorii. Każda osoba loguje się kontem Google, doda
 - **Android (Chrome):** menu ⋮ → „Zainstaluj aplikację” lub „Dodaj do ekranu głównego”.
 - **Komputer (Chrome lub Edge):** ikona instalacji na końcu paska adresu.
 
-## Jak wprowadzać zmiany
-
-Otwórz plik w repozytorium, kliknij ikonę ołówka, wprowadź zmianę i kliknij **Commit changes**. Możesz też wgrać nową wersję przez **Add file → Upload files**. Strona odświeży się po 1–2 minutach.
-
 ## Pliki
 
 | Plik | Do czego służy |
 | --- | --- |
-| `index.html` | Cała aplikacja: wygląd i działanie |
+| `index.html` | Układ aplikacji |
+| `styles.css` | Wygląd w stylistyce Cartrack |
+| `app.js` | Działanie aplikacji: logowanie, rankingi, wyzwania, kalendarz, odznaki |
+| `parse.js` | Odczyt plików GPX, TCX i FIT oraz rozpoznawanie rodzaju aktywności |
 | `firebase-config.js` | Połączenie z projektem Firebase |
 | `firestore.rules` | Kopia reguł bezpieczeństwa bazy (obowiązujące są w konsoli Firebase → Firestore → Rules) |
-| `manifest.webmanifest`, `sw.js`, `*.png` | Instalacja aplikacji i ikony |
+| `manifest.webmanifest`, `sw.js`, `*.png` | Instalacja aplikacji, logo i ikony |
 
-## Opcjonalnie: tylko adresy firmowe
+## Jak wprowadzać zmiany
 
-Żeby do klubu mogły dołączyć tylko osoby z firmowym adresem e-mail, w regułach Firestore zamień każde `request.auth != null` na:
-
-    request.auth != null && request.auth.token.email.matches('.*@twojafirma[.]com$')
-
-W miejsce `twojafirma[.]com` wpisz domenę firmową, a potem opublikuj reguły w konsoli Firebase. Działa to tylko wtedy, gdy firmowe adresy są kontami Google, np. w Google Workspace.
+Otwórz plik w repozytorium, kliknij ikonę ołówka, wprowadź zmianę i kliknij **Commit changes**. Strona odświeży się po 1–2 minutach.
