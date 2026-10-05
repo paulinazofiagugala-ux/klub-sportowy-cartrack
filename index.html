@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Klub Sportowy Cartrack</title>
+<meta name="description" content="Klubowy ranking dystansu i kalorii.">
+<meta name="theme-color" content="#F47735">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Klub Cartrack">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Roboto:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,500,0,0&display=block">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+
+/* Klub Sportowy Cartrack. Layout: phone-first single column; orange brand banner with grid overlay, sticky period switch, bottom tab bar. Palette & type per Cartrack brand guidelines (main orange, main blue, black, white, greys; Montserrat titles, Roboto body, Material icons). */
+:root{
+  --bg:#F3F4F4; --surface:#FFFFFF; --ink:#000000; --ink2:#212121; --muted:#5B5F63; --line:#DBDDDF;
+  --orange:#F47735; --orange-bright:#F55500; --orange50:#FDE9DF; --blue:#AAD4F9; --sky:#7BC1FF; --blue50:#EEF6FE;
+  --on-orange:#FFFFFF; --chip:#F3F4F4; --pill-ink:#000000;
+  --f-title:"Montserrat",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-body:"Roboto",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#000000; --surface:#212121; --ink:#FFFFFF; --ink2:#F3F4F4; --muted:#ADB1B5; --line:#37393C;
+  --orange50:#3A2416; --blue50:#1C2A36; --chip:#37393C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#000000; --surface:#212121; --ink:#FFFFFF; --ink2:#F3F4F4; --muted:#ADB1B5; --line:#37393C;
+  --orange50:#3A2416; --blue50:#1C2A36; --chip:#37393C; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+.ms{visibility:hidden}
+.icons-ready .ms{visibility:visible}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
+.ms{font-family:"Material Symbols Outlined";font-weight:normal;font-style:normal;font-size:22px;line-height:1;display:inline-block;letter-spacing:normal;text-transform:none;white-space:nowrap;direction:ltr;-webkit-font-feature-settings:"liga";font-feature-settings:"liga";-webkit-font-smoothing:antialiased;width:1em;overflow:hidden}
+.wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:14px 104px}
+.banner{position:relative;overflow:hidden;border-radius:18px;background:var(--orange);color:var(--on-orange);padding:20px 18px 18px;display:grid;gap:6px}
+.banner::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.14) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.14) 1px,transparent 1px);background-size:28px 28px;-webkit-mask-image:linear-gradient(180deg,transparent 0%,#000 100%);mask-image:linear-gradient(180deg,transparent 0%,#000 100%);pointer-events:none}
+.banner::after{content:"";position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,var(--orange-bright) 0%,transparent 70%);opacity:.8;pointer-events:none}
+.banner > *{position:relative;z-index:1}
+.eyebrow{font:700 11px var(--f-title);letter-spacing:.14em;text-transform:uppercase;opacity:.95}
+h1{font-family:var(--f-title);font-weight:800;font-size:28px;line-height:1.1;margin:0;text-wrap:balance}
+.who{font:500 13px var(--f-body);display:flex;align-items:center;gap:6px;min-width:0}
+.who span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sticky{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:12px 10px}
+.seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+.seg button{flex:1;border:0;background:transparent;color:var(--muted);font:700 13px var(--f-title);padding:8px 6px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);padding:6px 16px calc(6px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center}
+.tabbar .in{display:flex;gap:4px;max-width:560px;width:100%}
+.tabbar button{flex:1;border:0;background:transparent;color:var(--muted);font:600 12px var(--f-title);padding:7px 4px;border-radius:12px;cursor:pointer;display:grid;justify-items:center;gap:2px}
+.tabbar button .ms{font-size:24px}
+.tabbar button[aria-current="page"]{color:var(--ink)}
+.tabbar button[aria-current="page"] .ms{color:var(--on-orange);background:var(--orange);border-radius:999px;width:52px;padding:3px 0;text-align:center;overflow:visible}
+section{display:grid;gap:14px}
+.totals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.tot{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-width:0;display:grid;gap:2px}
+.tot .ms{font-size:20px}
+.tot.km .ms{color:var(--orange)} .tot.kc .ms{color:var(--sky)} .tot.n .ms{color:var(--muted)}
+.tot b{display:block;font-family:var(--f-title);font-weight:800;font-size:22px;line-height:1.15;font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:ellipsis}
+.tot small{font:500 11px var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.metric{display:flex;gap:8px}
+.metric button{flex:1;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:10px;font:700 14px var(--f-title);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.metric button[aria-pressed="true"].m-km{border-color:var(--orange);background:var(--orange);color:var(--on-orange)}
+.metric button[aria-pressed="true"].m-kc{border-color:var(--blue);background:var(--blue);color:#000}
+.podium{display:grid;grid-template-columns:1fr 1.15fr 1fr;align-items:end;gap:8px;padding-top:6px}
+.pod{display:grid;justify-items:center;gap:6px;text-align:center;min-width:0}
+.pod .name{font:700 14px var(--f-title);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pod .val{font-family:var(--f-title);font-weight:800;font-size:18px;font-variant-numeric:tabular-nums}
+.pod .step{width:100%;border-radius:12px 12px 4px 4px;display:grid;place-items:center;font-family:var(--f-title);font-weight:800;font-size:28px}
+.pod.p1 .step{height:92px;background:var(--orange);color:#fff}
+.pod.p2 .step{height:68px;background:#37393C;color:#fff}
+.pod.p3 .step{height:52px;background:var(--blue);color:#000}
+.pod.p1 .ms{color:var(--orange);font-size:26px}
+.av{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font:700 16px var(--f-title);flex:none}
+.pod.p1 .av{width:56px;height:56px;font-size:20px}
+.list{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.row{display:grid;grid-template-columns:24px 36px 1fr auto;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .pos{font:800 17px var(--f-title);color:var(--muted);text-align:center}
+.row .av{width:36px;height:36px;font-size:13px}
+.row .mid{min-width:0;display:grid;gap:4px}
+.row .nm{font:600 14px var(--f-title);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .nm em{font:700 10px var(--f-title);letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--orange);padding:2px 7px;border-radius:99px;margin-left:6px;vertical-align:2px}
+.bar{height:6px;border-radius:99px;background:var(--chip);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--orange-bright),var(--orange))}
+.kcalmode .bar i{background:linear-gradient(90deg,var(--sky),var(--blue))}
+.row .v{font:800 19px var(--f-title);font-variant-numeric:tabular-nums;text-align:right}
+.row .v small{font:500 12px var(--f-body);color:var(--muted);margin-left:3px}
+.row .sub{font-size:12px;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:14px}
+h2{font-family:var(--f-title);font-weight:700;font-size:20px;margin:0}
+.hint{font-size:13px;color:var(--muted);margin:0}
+label{display:grid;gap:6px;font:500 13px var(--f-body);color:var(--muted)}
+input{font:500 16px var(--f-body);color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:11px 12px;width:100%;min-width:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.types{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.types button{border:1.5px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:10px 4px;font:600 12px var(--f-title);cursor:pointer;display:grid;justify-items:center;gap:4px}
+.types button .ms{font-size:26px}
+.types button[aria-pressed="true"]{border-color:var(--orange);background:var(--orange);color:#fff}
+.kcalbox{display:flex;align-items:center;gap:12px;background:var(--blue50);border:1px solid var(--blue);border-radius:12px;padding:10px 12px}
+.kcalbox input{background:var(--surface);max-width:120px;font-weight:700}
+.kcalbox p{margin:0;font-size:12px;color:var(--muted);flex:1;min-width:0}
+.btn{border:0;background:var(--orange);color:#fff;font:700 15px var(--f-title);padding:13px 16px;border-radius:12px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn:hover{background:var(--orange-bright)}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
+.empty{text-align:center;padding:28px 16px;display:grid;gap:10px;justify-items:center;color:var(--muted)}
+.empty .ms{font-size:44px;color:#fff;background:var(--orange);border-radius:50%;width:72px;height:72px;display:grid;place-items:center;overflow:visible}
+.empty b{color:var(--ink);font:700 16px var(--f-title)}
+.act{display:grid;grid-template-columns:36px 1fr auto auto;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--line)}
+.act:first-child{border-top:0}
+.act .ic{width:36px;height:36px;border-radius:50%;background:var(--orange);color:#fff;display:grid;place-items:center}
+.act .ic .ms{font-size:20px}
+.act .mid{min-width:0}
+.act .t{font:600 14px var(--f-title)}
+.act .d{font-size:12px;color:var(--muted)}
+.act .n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;font-size:14px}
+.act .n span{display:block;color:var(--muted);font-size:12px;font-weight:500}
+.del{border:0;background:transparent;color:var(--muted);cursor:pointer;padding:6px 8px;border-radius:8px;font:600 12px var(--f-body)}
+.del.arm{background:var(--ink);color:var(--bg)}
+.notice{background:var(--surface);border:1px dashed var(--line);border-radius:14px;padding:12px 14px;font-size:13px;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font:600 14px var(--f-body);z-index:9;max-width:calc(100% - 32px)}
+.stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px;min-width:0;display:grid;gap:2px}
+.stat small{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.stat b{font:700 15px var(--f-title);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.stat span{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+details.help{font-size:13px;color:var(--muted)}
+details.help summary{cursor:pointer;font:600 14px var(--f-title);color:var(--ink)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+#dbmsg,#v-login{margin-top:12px}
+.login .btn{justify-self:start}
+svg.g{width:20px;height:20px}
+#logoutBtn{justify-self:start}
+.btn:disabled{opacity:.5;cursor:default}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="banner">
+    <div class="eyebrow">Ranking aktywności</div>
+    <h1>Klub Sportowy Cartrack</h1>
+    <div class="who" id="who" hidden><span class="ms">person</span><span id="whoName"></span></div>
+  </div>
+
+  <div class="sticky" id="periodBar" hidden>
+    <div class="seg" role="group" aria-label="Okres">
+      <button data-p="week" aria-pressed="true">Ten tydzień</button>
+      <button data-p="month" aria-pressed="false">Ten miesiąc</button>
+      <button data-p="all" aria-pressed="false">Cały czas</button>
+    </div>
+  </div>
+
+  <div id="dbmsg" class="notice" hidden></div>
+
+  <section id="v-login" hidden>
+    <div class="card login">
+      <h2>Witaj w klubie</h2>
+      <p class="hint">Zaloguj się kontem Google, żeby zobaczyć ranking i dodawać swoje treningi. Twój adres e-mail nie jest pokazywany innym, w rankingu widać tylko Twój nick.</p>
+      <button class="btn" id="loginBtn" type="button"><svg class="g" viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M21.35 11.1H12v2.98h5.35c-.23 1.4-1.66 4.1-5.35 4.1-3.22 0-5.85-2.67-5.85-5.95S8.78 6.28 12 6.28c1.83 0 3.06.78 3.76 1.45l2.57-2.47C16.68 3.72 14.55 2.8 12 2.8 6.92 2.8 2.8 6.92 2.8 12s4.12 9.2 9.2 9.2c5.31 0 8.83-3.73 8.83-8.99 0-.6-.07-1.06-.15-1.51z"/></svg>Zaloguj przez Google</button>
+    </div>
+  </section>
+
+  <section id="v-rank" hidden>
+    <div class="totals">
+      <div class="tot km"><span class="ms">route</span><b id="t-km">0</b><small>Razem km</small></div>
+      <div class="tot kc"><span class="ms">local_fire_department</span><b id="t-kc">0</b><small>Razem kcal</small></div>
+      <div class="tot n"><span class="ms">event_available</span><b id="t-n">0</b><small>Treningi</small></div>
+    </div>
+    <div class="metric" role="group" aria-label="Ranking według">
+      <button class="m-km" data-m="km" aria-pressed="true"><span class="ms">route</span>Dystans</button>
+      <button class="m-kc" data-m="kcal" aria-pressed="false"><span class="ms">local_fire_department</span>Kalorie</button>
+    </div>
+    <div id="podium" class="podium"></div>
+    <div id="ranklist" class="list"></div>
+    <div id="records" class="stats"></div>
+  </section>
+
+  <section id="v-add" hidden>
+    <div class="card" id="profileCard" hidden>
+      <h2>Dołącz do klubu</h2>
+      <p class="hint">Podaj nick, pod którym będziesz widoczna lub widoczny w rankingu.</p>
+      <label>Nick<input id="p-nick" maxlength="24" placeholder="np. Paulina"></label>
+      <button class="btn" id="p-save"><span class="ms">how_to_reg</span>Dołącz</button>
+    </div>
+    <form class="card" id="addForm" hidden>
+      <h2>Dodaj trening</h2>
+      <div class="types" id="types"></div>
+      <div class="grid2">
+        <label>Dystans (km)<input id="a-km" type="number" inputmode="decimal" step="0.01" min="0.1" max="500" placeholder="5,0" required></label>
+        <label>Czas (min, opcjonalnie)<input id="a-min" type="number" inputmode="numeric" min="1" max="1440" placeholder="30"></label>
+      </div>
+      <label>Data<input id="a-date" type="date" required></label>
+      <div class="kcalbox">
+        <label>Kalorie<input id="a-kcal" type="number" inputmode="numeric" min="0" max="20000" placeholder="0"></label>
+        <p>Szacowane z dystansu i rodzaju treningu. Możesz wpisać własną wartość, np. z zegarka.</p>
+      </div>
+      <button class="btn" id="a-save" type="submit"><span class="ms">add</span>Dodaj do rankingu</button>
+    </form>
+  </section>
+
+  <section id="v-me" hidden>
+    <div class="stats" id="mystats"></div>
+    <div class="list" id="mylist"></div>
+    <div class="card" id="meCard">
+      <h2>Mój profil</h2>
+      <label>Nick<input id="m-nick" maxlength="24"></label>
+      <button class="btn ghost" id="m-save">Zapisz nick</button>
+    </div>
+    <details class="help">
+      <summary>Jak zainstalować aplikację na telefonie?</summary>
+      <p>iPhone (Safari): przycisk Udostępnij, potem „Do ekranu początkowego”. Android (Chrome): menu ⋮, potem „Zainstaluj aplikację” lub „Dodaj do ekranu głównego”. Na komputerze w Chrome lub Edge: ikona instalacji na końcu paska adresu.</p>
+    </details>
+    <button class="btn ghost" id="logoutBtn" type="button">Wyloguj się</button>
+  </section>
+</div>
+
+<nav class="tabbar" id="tabbar" hidden><div class="in">
+  <button data-v="rank" aria-current="page"><span class="ms">leaderboard</span>Ranking</button>
+  <button data-v="add"><span class="ms">add_circle</span>Dodaj</button>
+  <button data-v="me"><span class="ms">person</span>Moje</button>
+</div></nav>
+
+<div class="toast" id="toast" hidden></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+import { getFirestore, collection, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+import { firebaseConfig } from "./firebase-config.js";
+
+const $ = id => document.getElementById(id);
+
+// ---------- Firebase ----------
+let auth = null, fs = null;
+const configured = firebaseConfig && firebaseConfig.apiKey && !String(firebaseConfig.apiKey).startsWith("WKLEJ");
+if (configured) {
+  const app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  auth.languageCode = "pl";
+  fs = getFirestore(app);
+}
+
+// ---------- Activity types: kcal per km for an average adult (about 70 kg); editable per entry ----------
+const TYPES = [
+  { k: "run", n: "Bieg", i: "directions_run", f: 70 },
+  { k: "walk", n: "Spacer", i: "directions_walk", f: 50 },
+  { k: "nordic", n: "Nordic walking", i: "nordic_walking", f: 55 },
+  { k: "bike", n: "Rower", i: "directions_bike", f: 25 },
+  { k: "skate", n: "Rolki", i: "roller_skating", f: 32 },
+  { k: "swim", n: "Pływanie", i: "pool", f: 245 }
+];
+const TMAP = Object.fromEntries(TYPES.map(t => [t.k, t]));
+const icon = name => { const s = document.createElement("span"); s.className = "ms"; s.textContent = name; s.setAttribute("aria-hidden", "true"); return s; };
+const nf1 = new Intl.NumberFormat("pl-PL", { maximumFractionDigits: 1 });
+const nf0 = new Intl.NumberFormat("pl-PL", { maximumFractionDigits: 0 });
+// avatar colours from the brand palette only: [background, text]
+const AV = [["#F47735","#FFFFFF"],["#000000","#FFFFFF"],["#AAD4F9","#000000"],["#F55500","#FFFFFF"],["#7BC1FF","#000000"],["#37393C","#FFFFFF"],["#FDE9DF","#000000"],["#5B5F63","#FFFFFF"]];
+
+let me = null, people = {}, myDoc = null, period = "week", metric = "km", type = "run", kcalTouched = false, unsub = null, currentView = "rank";
+try { const s = localStorage.getItem("ksc-ui"); if (s) { const o = JSON.parse(s); period = o.p || period; metric = o.m || metric; } } catch (e) {}
+const saveUi = () => { try { localStorage.setItem("ksc-ui", JSON.stringify({ p: period, m: metric })); } catch (e) {} };
+
+try { document.fonts.load('24px "Material Symbols Outlined"', "route").then(f => { if (f.length) document.documentElement.classList.add("icons-ready"); }).catch(() => {}); } catch (e) {}
+
+function toast(t) { const el = $("toast"); el.textContent = t; el.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => el.hidden = true, 2400); }
+const ymd = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+const today = () => ymd(new Date());
+function periodStart() {
+  const d = new Date(); d.setHours(0, 0, 0, 0);
+  if (period === "week") d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  else if (period === "month") d.setDate(1);
+  else return "0000-00-00";
+  return ymd(d);
+}
+function avColor(id) { let h = 0; for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0; return AV[h % AV.length]; }
+const initials = n => (n || "?").trim().split(/\s+/).slice(0, 2).map(s => s[0]).join("").toUpperCase() || "?";
+function avatar(id, nick) { const d = document.createElement("div"); d.className = "av"; const [b, f] = avColor(id); d.style.background = b; d.style.color = f; d.textContent = initials(nick); return d; }
+function fmtDate(s) { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d).toLocaleDateString("pl-PL", { weekday: "short", day: "numeric", month: "short" }); }
+const plTren = n => n === 1 ? "trening" : (n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? "treningi" : "treningów");
+function showMsg(t) { const m = $("dbmsg"); m.textContent = t; m.hidden = !t; }
+
+// ---------- views ----------
+function show(v) {
+  currentView = v;
+  for (const b of document.querySelectorAll(".tabbar button")) { if (b.dataset.v === v) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); }
+  $("v-rank").hidden = v !== "rank"; $("v-add").hidden = v !== "add"; $("v-me").hidden = v !== "me";
+  window.scrollTo(0, 0);
+}
+function setSignedIn(on) {
+  $("v-login").hidden = on;
+  $("tabbar").hidden = !on;
+  $("periodBar").hidden = !on;
+  if (on) show(currentView); else { $("v-rank").hidden = true; $("v-add").hidden = true; $("v-me").hidden = true; }
+}
+document.querySelectorAll(".tabbar button").forEach(b => b.onclick = () => show(b.dataset.v));
+document.querySelectorAll(".seg button").forEach(b => b.onclick = () => { period = b.dataset.p; saveUi(); render(); });
+document.querySelectorAll(".metric button").forEach(b => b.onclick = () => { metric = b.dataset.m; saveUi(); render(); });
+
+const typesEl = $("types");
+TYPES.forEach(t => { const b = document.createElement("button"); b.type = "button"; b.dataset.k = t.k; b.append(icon(t.i), t.n); b.onclick = () => { type = t.k; paintTypes(); autoKcal(); }; typesEl.append(b); });
+function paintTypes() { typesEl.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.k === type)); }
+paintTypes();
+$("a-date").value = today(); $("a-date").max = today();
+function autoKcal() { if (kcalTouched) return; const km = parseFloat(String($("a-km").value).replace(",", ".")); $("a-kcal").value = km > 0 ? Math.round(km * TMAP[type].f) : ""; }
+$("a-km").addEventListener("input", autoKcal);
+$("a-kcal").addEventListener("input", () => { kcalTouched = $("a-kcal").value !== ""; });
+
+// ---------- ranking ----------
+function aggregate() {
+  const from = periodStart(), rows = []; let tk = 0, tc = 0, tn = 0;
+  for (const [id, p] of Object.entries(people)) {
+    const es = (Array.isArray(p.entries) ? p.entries : []).filter(e => e && e.d >= from);
+    const km = es.reduce((s, e) => s + (+e.km || 0), 0), kcal = es.reduce((s, e) => s + (+e.kcal || 0), 0);
+    tk += km; tc += kcal; tn += es.length;
+    rows.push({ id, nick: String(p.nick || "Ktoś").slice(0, 24), km, kcal, n: es.length, es });
+  }
+  return { rows, tk, tc, tn };
+}
+const unit = () => metric === "km" ? "km" : "kcal";
+const fmtV = v => metric === "km" ? nf1.format(v) : nf0.format(v);
+
+function render() {
+  document.querySelectorAll(".seg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.p === period));
+  document.querySelectorAll(".metric button").forEach(b => b.setAttribute("aria-pressed", b.dataset.m === metric));
+  $("v-rank").classList.toggle("kcalmode", metric === "kcal");
+  const { rows, tk, tc, tn } = aggregate();
+  $("t-km").textContent = nf1.format(tk); $("t-kc").textContent = nf0.format(tc); $("t-n").textContent = tn;
+  const ranked = rows.filter(r => r.n > 0).sort((a, b) => b[metric] - a[metric] || b.n - a.n);
+  const pod = $("podium"), list = $("ranklist"), rec = $("records");
+  pod.replaceChildren(); list.replaceChildren(); rec.replaceChildren();
+  if (!ranked.length) {
+    pod.hidden = true; rec.hidden = true;
+    const e = document.createElement("div"); e.className = "empty";
+    const b1 = document.createElement("b"); b1.textContent = Object.keys(people).length ? "W tym okresie nikt jeszcze nie trenował" : "Ranking jest jeszcze pusty";
+    const s1 = document.createElement("span"); s1.textContent = "Dodaj pierwszy trening, a pojawisz się na podium.";
+    const b = document.createElement("button"); b.className = "btn"; b.append(icon("add"), "Dodaj trening"); b.onclick = () => show("add");
+    e.append(icon("directions_run"), b1, s1, b); list.append(e);
+  } else {
+    pod.hidden = false; rec.hidden = false;
+    for (const i of [1, 0, 2]) {
+      const r = ranked[i]; const c = document.createElement("div"); c.className = "pod p" + (i + 1);
+      if (r) {
+        if (i === 0) c.append(icon("emoji_events"));
+        c.append(avatar(r.id, r.nick));
+        const n = document.createElement("div"); n.className = "name"; n.textContent = r.nick;
+        const v = document.createElement("div"); v.className = "val"; v.textContent = fmtV(r[metric]) + " " + unit();
+        c.append(n, v);
+      }
+      const s = document.createElement("div"); s.className = "step"; s.textContent = i + 1; c.append(s); pod.append(c);
+    }
+    const max = ranked[0][metric] || 1;
+    ranked.forEach((r, i) => {
+      const row = document.createElement("div"); row.className = "row";
+      const pos = document.createElement("div"); pos.className = "pos"; pos.textContent = i + 1;
+      const mid = document.createElement("div"); mid.className = "mid";
+      const nm = document.createElement("div"); nm.className = "nm"; nm.textContent = r.nick;
+      if (r.id === me) { const em = document.createElement("em"); em.textContent = "Ty"; nm.append(em); }
+      const bar = document.createElement("div"); bar.className = "bar"; const bi = document.createElement("i"); bi.style.width = Math.max(3, r[metric] / max * 100) + "%"; bar.append(bi);
+      const sub = document.createElement("div"); sub.className = "sub";
+      sub.textContent = (metric === "km" ? nf0.format(r.kcal) + " kcal" : nf1.format(r.km) + " km") + " · " + r.n + " " + plTren(r.n);
+      mid.append(nm, bar, sub);
+      const v = document.createElement("div"); v.className = "v"; v.textContent = fmtV(r[metric]); const sm = document.createElement("small"); sm.textContent = unit(); v.append(sm);
+      row.append(pos, avatar(r.id, r.nick), mid, v); list.append(row);
+    });
+    let longest = null, mostN = null, bestKcal = null;
+    for (const r of ranked) {
+      for (const e of r.es) { if (!longest || e.km > longest.e.km) longest = { r, e }; if (!bestKcal || e.kcal > bestKcal.e.kcal) bestKcal = { r, e }; }
+      if (!mostN || r.n > mostN.n) mostN = r;
+    }
+    const addStat = (lab, who, txt) => { const s = document.createElement("div"); s.className = "stat"; const a = document.createElement("small"); a.textContent = lab; const b = document.createElement("b"); b.textContent = who; const c = document.createElement("span"); c.textContent = txt; s.append(a, b, c); rec.append(s); };
+    addStat("Najdłuższy trening", longest.r.nick, nf1.format(longest.e.km) + " km · " + (TMAP[longest.e.t]?.n || ""));
+    addStat("Najwięcej kcal naraz", bestKcal.r.nick, nf0.format(bestKcal.e.kcal) + " kcal · " + (TMAP[bestKcal.e.t]?.n || ""));
+    addStat("Najwięcej treningów", mostN.nick, mostN.n + " " + plTren(mostN.n));
+    addStat("Średnio na osobę", "Cały klub", nf1.format(ranked.reduce((s, r) => s + r.km, 0) / ranked.length) + " km");
+  }
+  renderMine(); renderForms();
+}
+
+function renderForms() {
+  const has = !!(myDoc && myDoc.nick);
+  $("profileCard").hidden = has || !me; $("addForm").hidden = !has;
+  if (has && document.activeElement !== $("m-nick")) $("m-nick").value = myDoc.nick || "";
+  $("meCard").hidden = !has;
+  $("who").hidden = !has; $("whoName").textContent = has ? ("Grasz jako " + myDoc.nick) : "";
+}
+
+function renderMine() {
+  const list = $("mylist"), st = $("mystats"); list.replaceChildren(); st.replaceChildren();
+  const es = (myDoc?.entries || []).slice().sort((a, b) => b.d.localeCompare(a.d) || b.at - a.at);
+  const inP = es.filter(e => e.d >= periodStart()), pl = { week: "tydzień", month: "miesiąc", all: "razem" }[period];
+  const add = (lab, val) => { const s = document.createElement("div"); s.className = "stat"; const a = document.createElement("small"); a.textContent = lab; const b = document.createElement("b"); b.textContent = val; s.append(a, b); st.append(s); };
+  add("Moje km (" + pl + ")", nf1.format(inP.reduce((s, e) => s + e.km, 0)));
+  add("Moje kcal (" + pl + ")", nf0.format(inP.reduce((s, e) => s + e.kcal, 0)));
+  if (!es.length) {
+    const e = document.createElement("div"); e.className = "empty";
+    const b = document.createElement("b"); b.textContent = "Brak Twoich treningów";
+    const s = document.createElement("span"); s.textContent = "Po dodaniu pojawią się tutaj i będzie można je usuwać.";
+    e.append(icon("fitness_center"), b, s); list.append(e); return;
+  }
+  for (const e of es.slice(0, 60)) {
+    const r = document.createElement("div"); r.className = "act";
+    const ic = document.createElement("div"); ic.className = "ic"; ic.append(icon(TMAP[e.t]?.i || "directions_run"));
+    const mid = document.createElement("div"); mid.className = "mid";
+    const t = document.createElement("div"); t.className = "t"; t.textContent = TMAP[e.t]?.n || "Trening";
+    const d = document.createElement("div"); d.className = "d"; d.textContent = fmtDate(e.d) + (e.min ? " · " + e.min + " min" : "");
+    mid.append(t, d);
+    const n = document.createElement("div"); n.className = "n"; n.textContent = nf1.format(e.km) + " km";
+    const sp = document.createElement("span"); sp.textContent = nf0.format(e.kcal) + " kcal"; n.append(sp);
+    const del = document.createElement("button"); del.className = "del"; del.textContent = "Usuń"; del.setAttribute("aria-label", "Usuń trening");
+    del.onclick = () => {
+      if (!del.classList.contains("arm")) { del.classList.add("arm"); del.textContent = "Na pewno?"; setTimeout(() => { del.classList.remove("arm"); del.textContent = "Usuń"; }, 3000); return; }
+      writeMine({ ...myDoc, entries: (myDoc.entries || []).filter(x => x.id !== e.id) }, "Usunięto trening");
+    };
+    r.append(ic, mid, n, del); list.append(r);
+  }
+}
+
+// ---------- writes (one at a time) ----------
+let chain = Promise.resolve();
+function writeMine(next, msg) {
+  if (!fs || !me) return;
+  const clean = { nick: String(next.nick || "").slice(0, 24), entries: (next.entries || []).slice(-1500) };
+  myDoc = clean; people[me] = clean; render();
+  chain = chain.then(() => setDoc(doc(fs, "people", me), clean)).then(() => msg && toast(msg)).catch(err => {
+    console.error(err);
+    if (err && err.code === "permission-denied") toast("Brak uprawnień do zapisu. Zaloguj się ponownie.");
+    else toast("Nie udało się zapisać. Sprawdź internet i spróbuj ponownie.");
+  });
+}
+
+$("p-save").onclick = () => {
+  const nick = $("p-nick").value.trim();
+  if (!nick) { $("p-nick").focus(); toast("Wpisz nick"); return; }
+  writeMine({ nick, entries: myDoc?.entries || [] }, "Witaj w klubie!");
+};
+$("m-save").onclick = () => {
+  const nick = $("m-nick").value.trim();
+  if (!nick) { toast("Nick nie może być pusty"); return; }
+  writeMine({ ...myDoc, nick }, "Zapisano nick");
+};
+$("addForm").addEventListener("submit", ev => {
+  ev.preventDefault();
+  const km = parseFloat(String($("a-km").value).replace(",", "."));
+  if (!(km > 0)) { toast("Podaj dystans"); return; }
+  const min = parseInt($("a-min").value, 10) || null;
+  let kcal = parseInt($("a-kcal").value, 10); if (!(kcal >= 0)) kcal = Math.round(km * TMAP[type].f);
+  const e = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), d: $("a-date").value || today(), t: type, km: Math.round(km * 100) / 100, min, kcal, at: Date.now() };
+  writeMine({ ...myDoc, entries: [...(myDoc.entries || []), e] }, "Dodano: " + nf1.format(e.km) + " km");
+  $("a-km").value = ""; $("a-min").value = ""; $("a-kcal").value = ""; kcalTouched = false;
+  show("rank");
+});
+
+// ---------- auth ----------
+$("loginBtn").onclick = async () => {
+  if (!auth) return;
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+  try { await signInWithPopup(auth, provider); }
+  catch (err) {
+    if (err && (err.code === "auth/popup-blocked" || err.code === "auth/operation-not-supported-in-this-environment")) { await signInWithRedirect(auth, provider); return; }
+    if (err && err.code === "auth/popup-closed-by-user") return;
+    if (err && err.code === "auth/unauthorized-domain") { showMsg("Ten adres strony nie jest dodany w Firebase (Authentication → Settings → Authorized domains)."); return; }
+    console.error(err); toast("Nie udało się zalogować. Spróbuj ponownie.");
+  }
+};
+$("logoutBtn").onclick = () => auth && signOut(auth);
+
+render();
+
+if (!configured) {
+  setSignedIn(false);
+  $("loginBtn").disabled = true;
+  showMsg("Aplikacja nie jest jeszcze połączona z Firebase. Uzupełnij plik firebase-config.js (instrukcja w README).");
+} else {
+  getRedirectResult(auth).catch(() => {});
+  onAuthStateChanged(auth, u => {
+    if (unsub) { unsub(); unsub = null; }
+    if (!u) { me = null; myDoc = null; people = {}; setSignedIn(false); render(); return; }
+    me = u.uid; showMsg("");
+    if (!$("p-nick").value) $("p-nick").value = (u.displayName || "").split(" ")[0];
+    setSignedIn(true);
+    unsub = onSnapshot(collection(fs, "people"), snap => {
+      const next = {};
+      snap.forEach(d => { const v = d.data(); if (v && v.nick) next[d.id] = v; });
+      people = next;
+      myDoc = people[me] || (myDoc && myDoc.nick ? myDoc : null);
+      if (myDoc) people[me] = myDoc;
+      render();
+    }, err => { console.error(err); showMsg("Nie udało się wczytać rankingu. Odśwież stronę."); });
+  });
+}
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("./sw.js").catch(() => {});
+</script>
+</body>
+</html>

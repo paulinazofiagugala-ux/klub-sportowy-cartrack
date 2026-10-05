@@ -1,0 +1,25 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Ranking: każda zalogowana osoba widzi wszystkich,
+    // ale zapisuje i usuwa wyłącznie własny dokument.
+    match /people/{uid} {
+      allow read: if request.auth != null;
+      allow create, update: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['nick', 'entries'])
+        && request.resource.data.nick is string
+        && request.resource.data.nick.size() > 0
+        && request.resource.data.nick.size() <= 24
+        && request.resource.data.entries is list
+        && request.resource.data.entries.size() <= 1500;
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Wszystko inne jest zablokowane.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
