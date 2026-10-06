@@ -228,3 +228,27 @@ details.help{font-size:13px;color:var(--muted)}
 details.help summary{cursor:pointer;font:600 14px var(--f-title);color:var(--ink)}
 @media (max-width:380px){.totals{grid-template-columns:repeat(2,1fr)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* v3: period navigation & participant profile */
+.pnav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:-4px}
+.pnav b{font:700 14px var(--f-title);text-align:center;flex:1}
+.pnav .iconbtn:disabled{opacity:.3;cursor:default}
+.clickable{cursor:pointer}
+.row.clickable:hover,.mini .r.clickable:hover,.act.clickable:hover{background:var(--chip)}
+.pod.clickable:hover .name{text-decoration:underline}
+.stat.clickable:hover{border-color:var(--orange)}
+.phead{display:flex;align-items:center;gap:14px}
+.phead .av{width:64px;height:64px;font-size:24px}
+.phead h2{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.chipline{display:flex;flex-wrap:wrap;gap:6px}
+.bchip{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:4px 10px 4px 6px;font:600 12px var(--f-title);background:var(--orange50);color:var(--ink)}
+.bchip .ms{font-size:16px;color:var(--orange)}
+.actd{padding:12px 14px;border-top:1px solid var(--line);display:grid;gap:8px}
+.actd:first-child{border-top:0}
+.actd .top{display:flex;align-items:center;gap:10px}
+.actd .top .mid{flex:1}
+.actd .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.actd .cell{background:var(--bg);border-radius:10px;padding:6px 8px;min-width:0}
+.actd .cell small{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.actd .cell b{font:700 13px var(--f-title);font-variant-numeric:tabular-nums;display:block;overflow-wrap:anywhere}
+@media (max-width:380px){.actd .grid{grid-template-columns:repeat(2,1fr)}}

@@ -51,6 +51,7 @@ let user = null, me = null, people = {}, myDoc = null, challenges = [], depts = 
 let view = "rank", period = "week", metric = "km", rtype = "all";
 let addType = null, autoType = null, kcalTouched = false, fileSrc = "manual";
 let calMode = "me", calMonth = new Date(), calSel = null, editingCh = null;
+let pOff = 0, personId = null, prevView = "rank";
 const unsubs = [];
 try { const s = JSON.parse(localStorage.getItem("ksc-ui") || "{}"); period = s.p || period; metric = s.m || metric; rtype = s.t || rtype; } catch (e) {}
 const saveUi = () => { try { localStorage.setItem("ksc-ui", JSON.stringify({ p: period, m: metric, t: rtype })); } catch (e) {} };
@@ -64,7 +65,21 @@ const addDays = (s, n) => { const d = parseYmd(s); d.setDate(d.getDate() + n); r
 const weekStart = s => { const d = parseYmd(s); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return ymdLocal(d); };
 const monthStart = s => s.slice(0, 8) + "01";
 const monthEnd = s => { const d = parseYmd(monthStart(s)); d.setMonth(d.getMonth() + 1); d.setDate(0); return ymdLocal(d); };
-function periodRange(p) { const t = today(); if (p === "week") return [weekStart(t), addDays(weekStart(t), 6)]; if (p === "month") return [monthStart(t), monthEnd(t)]; return ["0000-00-00", "9999-12-31"]; }
+function periodRange(p, off = 0) {
+  const t = today();
+  if (p === "week") { const ws = addDays(weekStart(t), 7 * off); return [ws, addDays(ws, 6)]; }
+  if (p === "month") { const d = parseYmd(monthStart(t)); d.setMonth(d.getMonth() + off); const ms = ymdLocal(d); return [ms, monthEnd(ms)]; }
+  if (p === "last7") return [addDays(t, -6), t];
+  return ["0000-00-00", "9999-12-31"];
+}
+function periodLabel(p, off) {
+  const [a, b] = periodRange(p, off);
+  if (p === "month") return parseYmd(a).toLocaleDateString("pl-PL", { month: "long", year: "numeric" });
+  if (p === "all") return "Od początku klubu";
+  const da = parseYmd(a), db = parseYmd(b);
+  const left = da.getMonth() === db.getMonth() ? String(da.getDate()) : fmtDate(a);
+  return left + " – " + fmtDate(b) + " " + db.getFullYear();
+}
 const secOf = e => e.sec != null ? +e.sec : (e.min ? e.min * 60 : null);
 function val(e, m) { if (m === "km") return +e.km || 0; if (m === "kcal") return +e.kcal || 0; if (m === "count") return 1; if (m === "time") return secOf(e) || 0; return 0; }
 function fmtDur(sec, cs) {
@@ -113,16 +128,26 @@ function progressBar(frac, blue, big) { const b = el("div", "bar" + (blue ? " bl
 function show(v) {
   view = v;
   for (const b of document.querySelectorAll(".tabbar button")) { if (b.dataset.v === v) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); }
-  for (const k of ["rank", "ch", "add", "cal", "me"]) $("v-" + k).hidden = k !== v;
+  for (const k of ["rank", "ch", "add", "cal", "me", "person"]) $("v-" + k).hidden = k !== v;
   window.scrollTo(0, 0);
   render();
 }
 function setSignedIn(on) {
   $("v-login").hidden = on; $("tabbar").hidden = !on;
-  if (on) show(view); else for (const k of ["rank", "ch", "add", "cal", "me"]) $("v-" + k).hidden = true;
+  if (on) show(view); else for (const k of ["rank", "ch", "add", "cal", "me", "person"]) $("v-" + k).hidden = true;
 }
 document.querySelectorAll(".tabbar button").forEach(b => b.onclick = () => show(b.dataset.v));
-document.querySelectorAll("#periodSeg button").forEach(b => b.onclick = () => { period = b.dataset.p; saveUi(); render(); });
+document.querySelectorAll("#periodSeg button").forEach(b => b.onclick = () => { period = b.dataset.p; pOff = 0; saveUi(); render(); });
+$("pPrev").onclick = () => { pOff--; render(); };
+$("pNext").onclick = () => { if (pOff < 0) { pOff++; render(); } };
+function clickable(node, id) {
+  if (!id || !people[id]) return node;
+  node.classList.add("clickable"); node.tabIndex = 0; node.setAttribute("role", "button");
+  node.onclick = () => openPerson(id);
+  node.onkeydown = ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); openPerson(id); } };
+  return node;
+}
+function openPerson(id) { if (view !== "person") prevView = view; personId = id; show("person"); }
 
 // ---------- badges ----------
 const BADGES = [
@@ -192,7 +217,10 @@ function renderRank() {
   for (const m of METRICS) { const b = el("button", "chip"); b.type = "button"; b.append(icon(m.i), m.n); b.setAttribute("aria-pressed", m.k === metric); b.onclick = () => { metric = m.k; saveUi(); render(); }; mc.append(b); }
   const tc = $("typeChips"); tc.replaceChildren();
   for (const t of [{ k: "all", n: "Wszystkie", i: "apps" }, ...TYPES]) { const b = el("button", "chip blue"); b.type = "button"; b.append(icon(t.i), t.n); b.setAttribute("aria-pressed", t.k === rtype); b.onclick = () => { rtype = t.k; saveUi(); render(); }; tc.append(b); }
-  const [from, to] = periodRange(period);
+  const [from, to] = periodRange(period, pOff);
+  const nav = period === "week" || period === "month";
+  $("pPrev").hidden = !nav; $("pNext").hidden = !nav; $("pNext").disabled = pOff >= 0;
+  $("pLabel").textContent = periodLabel(period, pOff);
   const recs = clubRecords();
   const rows = []; let T = { km: 0, kcal: 0, count: 0, time: 0 };
   for (const id of Object.keys(people)) {
@@ -218,7 +246,7 @@ function renderRank() {
   const showVal = r => metric === "time" ? fmtDur(r.time) : fmtNum(metric, r[metric]);
   for (const i of [1, 0, 2]) {
     const r = rows[i]; const c = el("div", "pod p" + (i + 1));
-    if (r) { if (i === 0) c.append(icon("emoji_events")); c.append(avatar(r.id, r.nick), el("div", "name", r.nick), el("div", "val", showVal(r) + (metric === "time" ? "" : " " + unitOf(metric)))); }
+    if (r) { if (i === 0) c.append(icon("emoji_events")); c.append(avatar(r.id, r.nick), el("div", "name", r.nick), el("div", "val", showVal(r) + (metric === "time" ? "" : " " + unitOf(metric)))); clickable(c, r.id); c.title = "Zobacz aktywności: " + r.nick; }
     c.append(el("div", "step", String(i + 1))); pod.append(c);
   }
   const max = rows[0][metric] || 1;
@@ -234,18 +262,18 @@ function renderRank() {
     if (rtype !== "all" && r.pk > 0) parts.push("tempo " + fmtPace(rtype, r.pk, r.ps));
     mid.append(nm, progressBar(r[metric] / max, metric === "kcal"), el("div", "sub", parts.join(" · ")));
     const v = el("div", "v", showVal(r)); if (metric !== "time") v.append(el("small", "", unitOf(metric)));
-    row.append(el("div", "pos", String(i + 1)), avatar(r.id, r.nick), mid, v); list.append(row);
+    row.append(el("div", "pos", String(i + 1)), avatar(r.id, r.nick), mid, v); clickable(row, r.id); list.append(row);
   });
   let longest = null, bestKcal = null, mostN = rows[0], longTime = null;
   for (const r of rows) {
     for (const e of r.es) { if (!longest || +e.km > +longest.e.km) longest = { r, e }; if (!bestKcal || +e.kcal > +bestKcal.e.kcal) bestKcal = { r, e }; const s = secOf(e); if (s && (!longTime || s > secOf(longTime.e))) longTime = { r, e }; }
     if (r.count > mostN.count) mostN = r;
   }
-  const add = (lab, who, txt) => { const s = el("div", "stat"); s.append(el("small", "", lab), el("b", "", who), el("span", "", txt)); rec.append(s); };
-  add("Najdłuższy dystans", longest.r.nick, nf2.format(longest.e.km) + " km · " + (TMAP[longest.e.t] || TMAP.run).n);
-  add("Najwięcej kcal naraz", bestKcal.r.nick, nf0.format(bestKcal.e.kcal) + " kcal · " + (TMAP[bestKcal.e.t] || TMAP.run).n);
-  add("Najwięcej treningów", mostN.nick, mostN.count + " " + plTren(mostN.count));
-  if (longTime) add("Najdłuższy trening", longTime.r.nick, fmtDur(secOf(longTime.e), true) + " · " + (TMAP[longTime.e.t] || TMAP.run).n);
+  const add = (lab, who, txt, uid) => { const s = el("div", "stat"); s.append(el("small", "", lab), el("b", "", who), el("span", "", txt)); clickable(s, uid); rec.append(s); };
+  add("Najdłuższy dystans", longest.r.nick, nf2.format(longest.e.km) + " km · " + (TMAP[longest.e.t] || TMAP.run).n, longest.r.id);
+  add("Najwięcej kcal naraz", bestKcal.r.nick, nf0.format(bestKcal.e.kcal) + " kcal · " + (TMAP[bestKcal.e.t] || TMAP.run).n, bestKcal.r.id);
+  add("Najwięcej treningów", mostN.nick, mostN.count + " " + plTren(mostN.count), mostN.id);
+  if (longTime) add("Najdłuższy trening", longTime.r.nick, fmtDur(secOf(longTime.e), true) + " · " + (TMAP[longTime.e.t] || TMAP.run).n, longTime.r.id);
   else add("Średnio na osobę", "Cały klub", nf1.format(T.km / rows.length) + " km");
 }
 
@@ -285,6 +313,7 @@ function miniRows(rows, fmt, labelOf, limit) {
     if (i >= limit && i !== myIdx) return;
     const d = el("div", "r" + (r.id && r.id === me ? " me" : ""));
     d.append(el("span", "p", String(i + 1)), el("b", "", labelOf(r)), el("span", "vv", fmt(r)));
+    if (r.id) clickable(d, r.id);
     box.append(d);
   });
   return box;
@@ -487,7 +516,7 @@ function actRow(e, showWho) {
   const s = secOf(e); const bits = [fmtDate(e.d)]; if (s) bits.push(fmtDur(s, true)); const p = fmtPace(e.t, +e.km, s); if (p) bits.push(p);
   mid.append(el("div", "sub", bits.join(" · ")));
   const n = el("div", "n", nf2.format(+e.km || 0) + " km"); n.append(el("span", "", nf0.format(+e.kcal || 0) + " kcal"));
-  r.append(ic, mid, n); return r;
+  r.append(ic, mid, n); if (showWho) clickable(r, e.uid); return r;
 }
 function renderCal() {
   document.querySelectorAll("#calSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.c === calMode));
@@ -526,6 +555,57 @@ function renderCal() {
   const chs = challenges.filter(c => c.start <= last && c.end >= first);
   $("calChTitle").hidden = !chs.length; const cl = $("calCh"); cl.hidden = !chs.length; cl.replaceChildren();
   for (const c of chs) { const r = el("div", "act"); const ic = el("div", "ic"); ic.style.background = "var(--ink)"; ic.style.color = "var(--bg)"; ic.append(icon((KINDS[c.kind] || KINDS.company).i)); const mid = el("div", "mid"); mid.append(el("div", "t", c.title), el("div", "sub", fmtDate(c.start) + " – " + fmtDate(c.end) + " · " + (KINDS[c.kind] || KINDS.company).n)); r.append(ic, mid, el("span"), el("span")); r.style.cursor = "pointer"; r.onclick = () => show("ch"); cl.append(r); }
+}
+
+// ---------- participant profile ----------
+$("personBack").onclick = () => show(prevView || "rank");
+function actDetail(e) {
+  const t = TMAP[e.t] || TMAP.run, s = secOf(e);
+  const box = el("div", "actd");
+  const top = el("div", "top"); const ic = el("div", "ic"); ic.append(icon(t.i));
+  const mid = el("div", "mid"); mid.append(el("div", "t", t.n), el("div", "sub", fmtDate(e.d, true)));
+  top.append(ic, mid); box.append(top);
+  const grid = el("div", "grid");
+  const cell = (lab, v) => { const c = el("div", "cell"); c.append(el("small", "", lab), el("b", "", v)); grid.append(c); };
+  cell("Dystans", nf2.format(+e.km || 0) + " km");
+  cell("Czas", s ? fmtDur(s, true) : "—");
+  cell("Tempo", fmtPace(e.t, +e.km, s) || "—");
+  cell("Kalorie", nf0.format(+e.kcal || 0) + " kcal");
+  box.append(grid);
+  const bits = [];
+  if (e.at) bits.push("Dodano " + new Date(e.at).toLocaleString("pl-PL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }));
+  bits.push(e.src && e.src !== "manual" ? "z pliku " + String(e.src).toUpperCase() : "wpis ręczny");
+  box.append(el("small", "hint", bits.join(" · ")));
+  return box;
+}
+function renderPerson() {
+  const id = personId, box = $("personBody"); box.replaceChildren();
+  if (!id || !people[id]) { box.append(el("p", "hint", "Nie znaleziono uczestnika.")); return; }
+  const p = people[id], es = entriesOf(id).slice().sort((a, b) => b.d.localeCompare(a.d) || (b.at || 0) - (a.at || 0));
+  const head = el("div", "card"); const ph = el("div", "phead"); const mid = el("div", "mid");
+  const h = el("h2", "", nickOf(id)); if (id === me) h.append(el("span", "tag", "Ty"));
+  mid.append(h, el("div", "sub", (p.dept || "bez działu") + " · " + es.length + " " + plTren(es.length)));
+  ph.append(avatar(id, nickOf(id)), mid); head.append(ph);
+  const si = streakInfo(es);
+  head.append(el("p", "hint", "Seria: " + si.streak + " tyg. z rzędu · w tym tygodniu: " + si.thisWeek + " " + plTren(si.thisWeek)));
+  box.append(head);
+  const T = { km: 0, kcal: 0, count: es.length, time: 0 };
+  for (const e of es) { T.km += +e.km || 0; T.kcal += +e.kcal || 0; T.time += secOf(e) || 0; }
+  const tots = el("div", "totals");
+  for (const m of METRICS) { const d = el("div", "tot"); d.append(icon(m.i), el("b", "", m.k === "time" ? nf1.format(T.time / 3600) + " h" : fmtNum(m.k, T[m.k])), el("small", "", m.k === "km" ? "km razem" : m.k === "kcal" ? "kcal razem" : m.k === "count" ? "Treningi" : "Czas")); tots.append(d); }
+  box.append(tots);
+  const earned = badgesFor(id).filter(b => b.on);
+  if (earned.length) {
+    box.append(el("h3", "sec-title", "Odznaki (" + earned.length + ")"));
+    const line = el("div", "chipline");
+    for (const b of earned) { const c = el("span", "bchip"); c.append(icon(b.i), b.n); line.append(c); }
+    box.append(line);
+  }
+  box.append(el("h3", "sec-title", "Aktywności (" + es.length + ")"));
+  const list = el("div", "list");
+  if (!es.length) list.append(el("div", "empty", "Ta osoba nie dodała jeszcze treningów."));
+  for (const e of es.slice(0, 200)) list.append(actDetail(e));
+  box.append(list);
 }
 
 // ---------- me ----------
@@ -659,6 +739,7 @@ function render() {
     else if (view === "ch") renderCh();
     else if (view === "cal") renderCal();
     else if (view === "me") renderMe();
+    else if (view === "person") renderPerson();
   } catch (e) { console.error(e); }
 }
 
