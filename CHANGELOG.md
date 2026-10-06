@@ -4,6 +4,13 @@ Każda zmiana w aplikacji jest tu zapisywana, żeby kolejne sesje (z Claude albo
 
 **Jak dopisywać:** nowa sekcja `## vN – RRRR-MM-DD – krótki tytuł`, pod nią: co się zmieniło dla uczestników, które pliki zmieniono, co trzeba jeszcze sprawdzić. Przy każdej zmianie podbij numer wersji w `index.html` (`styles.css?v=N`, `app.js?v=N`) i w `sw.js` (`CACHE = "ksc-vN"`), inaczej telefony mogą pokazywać starą wersję.
 
+## v6 – 2026-10-06 – Ranking działów i Samsung Health
+
+- Ranking: nowy przełącznik **Osoby / Działy**. W trybie Działy widać, który dział zebrał najwięcej km, kcal, treningów lub czasu w wybranym okresie (tydzień, miesiąc, 7 dni, cały czas) i dla wybranego rodzaju aktywności. Wynik działu to suma treningów jego członków; przy dziale widać też liczbę aktywnych osób i średnią na osobę. Twój dział jest wyróżniony.
+- Kliknięcie działu pokazuje ranking osób tylko z tego działu (filtr „Dział: …” z krzyżykiem do wyłączenia).
+- Odczyt zrzutów ekranu: dodano Samsung Health (etykiety „Czas treningu”, „Kalorie spalone…”, „Total burned calories”, rodzaj „Chodzenie”). Test na 3 makietach Samsung Health: 14/15 pól; jedyny błąd to źle rozpoznana bardzo duża liczba dystansu przez testowy OCR, do sprawdzenia na prawdziwych zrzutach.
+- Pliki: `app.js` (`renderDeptRank`, `rmode`, `deptF`), `index.html`, `styles.css`, `ocr.js`, `sw.js` (cache `ksc-v6`), `README.md`.
+
 ## v5 – 2026-10-06 – Znacznik sposobu dodania treningu
 
 - Przy każdym treningu (lista w Moje, kalendarz, profil uczestnika) widać znacznik: **Ręcznie** (szary), **Zrzut ekranu** (niebieski) albo **Plik GPX/TCX/FIT** (pomarańczowy).

@@ -1,4 +1,4 @@
-// Odczyt treningu ze zrzutu ekranu (Garmin, Amazfit/Zepp, Apple Watch, Strava, Komoot, adidas Running, Whoop).
+// Odczyt treningu ze zrzutu ekranu (Garmin, Amazfit/Zepp, Apple Watch, Samsung Health, Strava, Komoot, adidas Running, Whoop).
 // 1) ocrImage(file) – rozpoznaje tekst w przeglądarce (Tesseract.js, ładowany dopiero przy pierwszym użyciu),
 // 2) parseStatsText(text) – wyciąga z tekstu: rodzaj, dystans, czas, kalorie i datę.
 // Wynik: { type, km, sec, kcal, d, found: [...] } – pola mogą być null; uczestnik zawsze sprawdza dane przed zapisem.
@@ -65,7 +65,7 @@ function readKcal(line, withLabel) {
 const LABELS = {
   time: ["moving time", "czas ruchu", "czas w ruchu", "workout time", "czas treningu", "duration", "czas trwania", "czas aktywnosci", "total time", "czas calkowity", "elapsed time", "uplyniety czas", "czas", "time"],
   km: ["distance", "dystans", "odleglosc", "total distance", "laczny dystans"],
-  kcal: ["total kilocalories", "total calories", "laczne kalorie", "calkowite kalorie", "calories", "kalorie", "spalone kalorie", "energy burned", "active kilocalories", "active calories", "aktywne kalorie", "kcal"]
+  kcal: ["total kilocalories", "total calories", "laczne kalorie", "calkowite kalorie", "calories", "kalorie", "spalone kalorie", "kalorie spalone", "calories burned", "burned calories", "energy burned", "active kilocalories", "active calories", "aktywne kalorie", "kcal"]
 };
 const TYPE_WORDS = [
   ["nordic", "nordic"], ["nordic walking", "nordic"],
@@ -73,7 +73,7 @@ const TYPE_WORDS = [
   ["rolki", "skate"], ["inline", "skate"], ["skating", "skate"],
   ["rower", "bike"], ["kolarstwo", "bike"], ["cycling", "bike"], ["ride", "bike"], ["jazda", "bike"], ["bike", "bike"], ["mtb", "bike"], ["gravel", "bike"],
   ["bieg", "run"], ["bieganie", "run"], ["running", "run"], ["run", "run"], ["trail", "run"], ["jogging", "run"],
-  ["spacer", "walk"], ["chod", "walk"], ["walk", "walk"], ["walking", "walk"], ["wedrowka", "walk"], ["hike", "walk"], ["hiking", "walk"], ["turystyka piesza", "walk"]
+  ["spacer", "walk"], ["chodzenie", "walk"], ["chod", "walk"], ["walk", "walk"], ["walking", "walk"], ["wedrowka", "walk"], ["hike", "walk"], ["hiking", "walk"], ["turystyka piesza", "walk"]
 ];
 
 function labelHit(L, lab) {

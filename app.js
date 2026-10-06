@@ -49,13 +49,13 @@ const nf0 = new Intl.NumberFormat("pl-PL", { maximumFractionDigits: 0 });
 
 // ---------- state ----------
 let user = null, me = null, people = {}, myDoc = null, challenges = [], depts = [], admins = new Set();
-let view = "rank", period = "week", metric = "km", rtype = "all";
+let view = "rank", period = "week", metric = "km", rtype = "all", rmode = "people", deptF = null;
 let addType = null, autoType = null, kcalTouched = false, fileSrc = "manual";
 let calMode = "me", calMonth = new Date(), calSel = null, editingCh = null;
 let pOff = 0, personId = null, prevView = "rank";
 const unsubs = [];
-try { const s = JSON.parse(localStorage.getItem("ksc-ui") || "{}"); period = s.p || period; metric = s.m || metric; rtype = s.t || rtype; } catch (e) {}
-const saveUi = () => { try { localStorage.setItem("ksc-ui", JSON.stringify({ p: period, m: metric, t: rtype })); } catch (e) {} };
+try { const s = JSON.parse(localStorage.getItem("ksc-ui") || "{}"); period = s.p || period; metric = s.m || metric; rtype = s.t || rtype; rmode = s.r === "dept" ? "dept" : "people"; } catch (e) {}
+const saveUi = () => { try { localStorage.setItem("ksc-ui", JSON.stringify({ p: period, m: metric, t: rtype, r: rmode })); } catch (e) {} };
 
 // ---------- helpers ----------
 function toast(t) { const e = $("toast"); e.textContent = t; e.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => e.hidden = true, 2600); }
@@ -139,6 +139,7 @@ function setSignedIn(on) {
 }
 document.querySelectorAll(".tabbar button").forEach(b => b.onclick = () => show(b.dataset.v));
 document.querySelectorAll("#periodSeg button").forEach(b => b.onclick = () => { period = b.dataset.p; pOff = 0; saveUi(); render(); });
+document.querySelectorAll("#modeSeg button").forEach(b => b.onclick = () => { rmode = b.dataset.r; if (rmode === "dept") deptF = null; saveUi(); render(); });
 $("pPrev").onclick = () => { pOff--; render(); };
 $("pNext").onclick = () => { if (pOff < 0) { pOff++; render(); } };
 function clickable(node, id) {
@@ -222,9 +223,16 @@ function renderRank() {
   const nav = period === "week" || period === "month";
   $("pPrev").hidden = !nav; $("pNext").hidden = !nav; $("pNext").disabled = pOff >= 0;
   $("pLabel").textContent = periodLabel(period, pOff);
+  document.querySelectorAll("#modeSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.r === rmode));
+  const df = $("deptFilter"); df.replaceChildren(); df.hidden = !(rmode === "people" && deptF);
+  if (deptF && rmode === "people") { const b = el("button"); b.type = "button"; b.title = "Pokaż wszystkich"; b.append("Dział: " + deptF, icon("close")); b.onclick = () => { deptF = null; render(); }; df.append(el("span", "", "Filtr:"), b); }
+  $("deptNote").hidden = true;
+  if (rmode === "dept") return renderDeptRank(from, to);
+  $("recTitle").hidden = false;
   const recs = clubRecords();
   const rows = []; let T = { km: 0, kcal: 0, count: 0, time: 0 };
   for (const id of Object.keys(people)) {
+    if (deptF && (people[id].dept || "") !== deptF) continue;
     const es = entriesOf(id).filter(e => e.d >= from && e.d <= to && (rtype === "all" || (e.t || "run") === rtype));
     if (!es.length) continue;
     const r = { id, nick: nickOf(id), es, km: 0, kcal: 0, count: es.length, time: 0, pk: 0, ps: 0 };
@@ -276,6 +284,55 @@ function renderRank() {
   add("Najwięcej treningów", mostN.nick, mostN.count + " " + plTren(mostN.count), mostN.id);
   if (longTime) add("Najdłuższy trening", longTime.r.nick, fmtDur(secOf(longTime.e), true) + " · " + (TMAP[longTime.e.t] || TMAP.run).n, longTime.r.id);
   else add("Średnio na osobę", "Cały klub", nf1.format(T.km / rows.length) + " km");
+}
+
+// Ranking działów: suma wyników wszystkich osób z działu w wybranym okresie
+function renderDeptRank(from, to) {
+  const pod = $("podium"), list = $("ranklist"), rec = $("records");
+  pod.replaceChildren(); list.replaceChildren(); rec.replaceChildren();
+  pod.hidden = true; rec.hidden = true; $("recTitle").hidden = true;
+  const by = {}; let T = { km: 0, kcal: 0, count: 0, time: 0 };
+  const members = {}; for (const id of Object.keys(people)) { const d = people[id].dept || ""; if (d) members[d] = (members[d] || 0) + 1; }
+  for (const d of depts) by[d] = { d, km: 0, kcal: 0, count: 0, time: 0, act: new Set() };
+  for (const id of Object.keys(people)) {
+    const d = people[id].dept || "";
+    const es = entriesOf(id).filter(e => e.d >= from && e.d <= to && (rtype === "all" || (e.t || "run") === rtype));
+    if (!es.length) continue;
+    for (const e of es) { const s = secOf(e) || 0; T.km += +e.km || 0; T.kcal += +e.kcal || 0; T.count++; T.time += s; }
+    if (!d) continue;
+    const r = by[d] = by[d] || { d, km: 0, kcal: 0, count: 0, time: 0, act: new Set() };
+    for (const e of es) { r.km += +e.km || 0; r.kcal += +e.kcal || 0; r.count++; r.time += secOf(e) || 0; }
+    r.act.add(id);
+  }
+  const tots = $("totals"); tots.replaceChildren();
+  for (const m of METRICS) { const dv = el("div", "tot"); dv.append(icon(m.i), el("b", "", m.k === "time" ? nf1.format(T.time / 3600) + " h" : fmtNum(m.k, T[m.k])), el("small", "", m.k === "km" ? "km" : m.k === "kcal" ? "kcal" : m.k === "count" ? "Treningi" : "Czas")); tots.append(dv); }
+  const rows = Object.values(by).sort((a, b) => b[metric] - a[metric] || b.count - a.count || a.d.localeCompare(b.d, "pl"));
+  if (!rows.length) {
+    const e = el("div", "empty"); e.append(icon("groups"), el("b", "", "Nie ma jeszcze działów"), el("span", "", "Administrator dodaje działy w zakładce Moje, a uczestnicy wybierają swój dział w profilu."));
+    list.append(e); return;
+  }
+  const max = rows[0][metric] || 1, myDept = myDoc && myDoc.dept;
+  const showVal = r => metric === "time" ? fmtHours(r.time) : fmtNum(metric, r[metric]);
+  rows.forEach((r, i) => {
+    const row = el("div", "row clickable deptrow" + (r.d === myDept ? " mine" : "")); const mid = el("div", "mid");
+    const nm = el("div", "nm"); nm.append(el("span", "", r.d)); if (r.d === myDept) nm.append(el("span", "tag", "Twój"));
+    const n = members[r.d] || 0, a = r.act.size;
+    const parts = [a + " z " + n + " " + (n === 1 ? "osoby" : "osób") + " aktywnie"];
+    if (metric !== "km") parts.push(nf1.format(r.km) + " km");
+    if (metric !== "kcal") parts.push(nf0.format(r.kcal) + " kcal");
+    if (metric !== "count") parts.push(r.count + " " + plTren(r.count));
+    if (a && metric !== "time") parts.push("śr. " + fmtNum(metric, r[metric] / a) + " " + unitOf(metric) + "/os.");
+    mid.append(nm, progressBar(r[metric] / max, metric === "kcal"), el("div", "sub", parts.join(" · ")));
+    const v = el("div", "v", showVal(r)); if (metric !== "time") v.append(el("small", "", unitOf(metric)));
+    const dav = el("div", "dav"); dav.append(icon(i === 0 && r[metric] > 0 ? "emoji_events" : "groups"));
+    row.append(el("div", "pos", String(i + 1)), dav, mid, v);
+    row.tabIndex = 0; row.setAttribute("role", "button"); row.title = "Zobacz osoby z działu " + r.d;
+    const go = () => { deptF = r.d; rmode = "people"; saveUi(); render(); };
+    row.onclick = go; row.onkeydown = ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); go(); } };
+    list.append(row);
+  });
+  const note = $("deptNote"); note.hidden = false;
+  note.textContent = "Wynik działu to suma wszystkich treningów jego członków w wybranym okresie. Kliknij dział, żeby zobaczyć ranking jego osób." + (myDept ? "" : " Swój dział wybierzesz w zakładce Moje.");
 }
 
 // ---------- challenges ----------

@@ -45,6 +45,15 @@ section{display:grid;gap:14px;min-width:0}
 .seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px;gap:2px}
 .seg button{flex:1;border:0;background:transparent;color:var(--muted);font:700 13px var(--f-title);padding:8px 6px;border-radius:999px;cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+#modeSeg button{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+#modeSeg .ms{font-size:18px}
+.deptfilter{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font:600 13px var(--f-title)}
+.deptfilter button{border:1.5px solid var(--orange);background:var(--orange);color:#fff;border-radius:999px;padding:6px 8px 6px 12px;font:600 13px var(--f-title);display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+.deptfilter button .ms{font-size:18px}
+.dav{width:36px;height:36px;border-radius:12px;display:grid;place-items:center;background:var(--blue);color:#000}
+.dav .ms{font-size:20px}
+.row.mine{background:var(--orange50)}
+.deptrow .sub{white-space:normal;overflow:visible;text-overflow:clip}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 12px;font:600 13px var(--f-title);cursor:pointer;display:inline-flex;align-items:center;gap:6px}
