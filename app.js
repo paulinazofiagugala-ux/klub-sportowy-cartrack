@@ -910,6 +910,16 @@ $("m-save").onclick = () => {
 };
 
 // ---------- admin ----------
+let adminDel = null; // uid uczestnika, którego usunięcie czeka na potwierdzenie
+// Administrator: usunięcie uczestnika razem z treningami (dokument people/{uid}) i ewentualnymi uprawnieniami
+async function adminDeletePerson(id) {
+  const nick = nickOf(id);
+  try {
+    await deleteDoc(doc(fs, "people", id));
+    if (admins.has(id)) await deleteDoc(doc(fs, "admins", id));
+    adminDel = null; toast("Usunięto uczestnika: " + nick);
+  } catch (e) { console.error(e); toast(e && e.code === "permission-denied" ? "Brak uprawnień do usunięcia" : "Nie udało się usunąć uczestnika"); }
+}
 function renderAdmin() {
   const ta = $("deptText"); if (document.activeElement !== ta) ta.value = depts.join("\n");
   const box = $("adminList"); box.replaceChildren();
@@ -924,7 +934,22 @@ function renderAdmin() {
       const ref = doc(fs, "admins", id);
       (admins.has(id) ? deleteDoc(ref) : setDoc(ref, { by: me, at: Date.now() })).then(() => toast(admins.has(id) ? "Odebrano uprawnienia" : "Nadano uprawnienia")).catch(() => toast("Nie udało się zmienić uprawnień"));
     };
-    r.append(avatar(id, nickOf(id)), mid, sw); box.append(r);
+    const actions = el("div", "adm-actions"); actions.append(sw);
+    if (id !== me) {
+      const db = el("button", "del"); db.type = "button"; db.title = "Usuń uczestnika"; db.setAttribute("aria-label", "Usuń uczestnika: " + nickOf(id));
+      db.append(icon("person_remove"), "Usuń"); db.onclick = () => { adminDel = adminDel === id ? null : id; renderAdmin(); };
+      actions.append(db);
+    }
+    r.append(avatar(id, nickOf(id)), mid, actions); box.append(r);
+    if (adminDel === id) {
+      const es = entriesOf(id), km = es.reduce((s, e) => s + (+e.km || 0), 0);
+      const c = el("div", "adm-confirm");
+      c.append(el("p", "", "Usunąć uczestnika „" + nickOf(id) + "” razem z " + es.length + " " + (es.length === 1 ? "treningiem" : "treningami") + " (" + nf1.format(km) + " km)" + (admins.has(id) ? " i uprawnieniami administratora" : "") + "? Zniknie z rankingu, wyzwań i kalendarza. Tego nie da się cofnąć."));
+      const row = el("div", "row-actions");
+      const yes = el("button", "btn small danger"); yes.type = "button"; yes.append(icon("delete_forever"), "Usuń na zawsze"); yes.onclick = () => { yes.disabled = true; adminDeletePerson(id); };
+      const no = el("button", "btn ghost small", "Anuluj"); no.type = "button"; no.onclick = () => { adminDel = null; renderAdmin(); };
+      row.append(yes, no); c.append(row); box.append(c);
+    }
   }
 }
 $("deptSave").onclick = () => {

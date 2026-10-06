@@ -4,6 +4,14 @@ Każda zmiana w aplikacji jest tu zapisywana, żeby kolejne sesje (z Claude albo
 
 **Jak dopisywać:** nowa sekcja `## vN – RRRR-MM-DD – krótki tytuł`, pod nią: co się zmieniło dla uczestników, które pliki zmieniono, co trzeba jeszcze sprawdzić. Przy każdej zmianie podbij numer wersji w `index.html` (`styles.css?v=N`, `app.js?v=N`) i w `sw.js` (`CACHE = "ksc-vN"`), inaczej telefony mogą pokazywać starą wersję.
 
+## v11 – 2026-10-06 – Administrator usuwa uczestnika
+
+- Panel administratora (zakładka Moje) → sekcja „Uczestnicy i administratorzy”: przy każdej osobie (poza sobą) jest przycisk **Usuń**. Po kliknięciu pojawia się czerwone potwierdzenie z liczbą treningów i km do usunięcia oraz przyciski „Usuń na zawsze” / „Anuluj”.
+- Usunięcie kasuje dokument `people/{uid}` (profil i wszystkie treningi, cele), a jeśli osoba była administratorem – także `admins/{uid}`. Osoba znika z rankingu, wyzwań i kalendarza.
+- Konto logowania (Firebase Authentication) zostaje – z przeglądarki nie da się go usunąć. Jeśli osoba zaloguje się ponownie, zacznie od pustego profilu. Całkowite usunięcie logowania: konsola Firebase → Authentication → Users → ⋮ → Delete account.
+- Reguły Firestore bez zmian (już pozwalały administratorowi usuwać `people/{uid}`; sprawdzone w konsoli).
+- Pliki: `app.js` (`adminDel`, `adminDeletePerson`, `renderAdmin`), `index.html`, `styles.css`, `sw.js` (cache `ksc-v11`).
+
 ## v10 – 2026-10-06 – Usuwanie własnych treningów
 
 - Każdy uczestnik może usunąć **tylko swój** trening i **tylko we własnym profilu**: w zakładce Moje (lista treningów) oraz we własnym profilu otwartym z rankingu. W kalendarzu, w widoku „skąd są dane” i w profilach innych osób nie ma przycisku usuwania.
