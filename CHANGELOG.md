@@ -4,6 +4,12 @@ Każda zmiana w aplikacji jest tu zapisywana, żeby kolejne sesje (z Claude albo
 
 **Jak dopisywać:** nowa sekcja `## vN – RRRR-MM-DD – krótki tytuł`, pod nią: co się zmieniło dla uczestników, które pliki zmieniono, co trzeba jeszcze sprawdzić. Przy każdej zmianie podbij numer wersji w `index.html` (`styles.css?v=N`, `app.js?v=N`) i w `sw.js` (`CACHE = "ksc-vN"`), inaczej telefony mogą pokazywać starą wersję.
 
+## v5 – 2026-10-06 – Znacznik sposobu dodania treningu
+
+- Przy każdym treningu (lista w Moje, kalendarz, profil uczestnika) widać znacznik: **Ręcznie** (szary), **Zrzut ekranu** (niebieski) albo **Plik GPX/TCX/FIT** (pomarańczowy).
+- Działa też dla starszych wpisów: pole `src` w danych (`manual`, `foto`, `gpx`/`tcx`/`fit`); brak pola = ręcznie.
+- Pliki: `app.js` (funkcje `srcInfo`, `srcTag`), `styles.css` (`.srctag`), `index.html`, `sw.js` (cache `ksc-v5`).
+
 ## v4 – 2026-10-06 – Odczyt treningu ze zrzutu ekranu
 
 - Nowe pole **„Wgraj zrzut ekranu”** w zakładce Dodaj. Aplikacja odczytuje z obrazka podsumowania treningu: rodzaj aktywności, dystans, czas, kalorie i datę, i wpisuje je do formularza. Uczestnik sprawdza dane i klika Dodaj.

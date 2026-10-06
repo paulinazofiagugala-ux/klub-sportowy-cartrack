@@ -545,9 +545,16 @@ $("addForm").addEventListener("submit", ev => {
 document.querySelectorAll("#calSeg button").forEach(b => b.onclick = () => { calMode = b.dataset.c; render(); });
 $("calPrev").onclick = () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() - 1, 1); calSel = null; render(); };
 $("calNext").onclick = () => { calMonth = new Date(calMonth.getFullYear(), calMonth.getMonth() + 1, 1); calSel = null; render(); };
+// Znacznik sposobu dodania: ręcznie, zrzut ekranu, plik (GPX/TCX/FIT)
+function srcInfo(e) {
+  if (e.src === "foto") return { k: "screen", i: "photo_camera", n: "Zrzut ekranu", long: "ze zrzutu ekranu" };
+  if (e.src && e.src !== "manual") { const x = String(e.src).toUpperCase(); return { k: "file", i: "upload_file", n: "Plik " + x, long: "z pliku " + x }; }
+  return { k: "manual", i: "edit", n: "Ręcznie", long: "wpis ręczny" };
+}
+function srcTag(e) { const s = srcInfo(e); const t = el("span", "srctag " + s.k); t.append(icon(s.i), document.createTextNode(s.n)); t.title = "Dodano " + s.long; return t; }
 function actRow(e, showWho) {
   const r = el("div", "act"); const ic = el("div", "ic"); ic.append(icon((TMAP[e.t] || TMAP.run).i));
-  const mid = el("div", "mid"); mid.append(el("div", "t", (showWho ? nickOf(e.uid) + " · " : "") + (TMAP[e.t] || TMAP.run).n));
+  const mid = el("div", "mid"); const tt = el("div", "t", (showWho ? nickOf(e.uid) + " · " : "") + (TMAP[e.t] || TMAP.run).n); tt.append(srcTag(e)); mid.append(tt);
   const s = secOf(e); const bits = [fmtDate(e.d)]; if (s) bits.push(fmtDur(s, true)); const p = fmtPace(e.t, +e.km, s); if (p) bits.push(p);
   mid.append(el("div", "sub", bits.join(" · ")));
   const n = el("div", "n", nf2.format(+e.km || 0) + " km"); n.append(el("span", "", nf0.format(+e.kcal || 0) + " kcal"));
@@ -598,7 +605,7 @@ function actDetail(e) {
   const t = TMAP[e.t] || TMAP.run, s = secOf(e);
   const box = el("div", "actd");
   const top = el("div", "top"); const ic = el("div", "ic"); ic.append(icon(t.i));
-  const mid = el("div", "mid"); mid.append(el("div", "t", t.n), el("div", "sub", fmtDate(e.d, true)));
+  const mid = el("div", "mid"); const tt = el("div", "t", t.n); tt.append(srcTag(e)); mid.append(tt, el("div", "sub", fmtDate(e.d, true)));
   top.append(ic, mid); box.append(top);
   const grid = el("div", "grid");
   const cell = (lab, v) => { const c = el("div", "cell"); c.append(el("small", "", lab), el("b", "", v)); grid.append(c); };
@@ -609,7 +616,7 @@ function actDetail(e) {
   box.append(grid);
   const bits = [];
   if (e.at) bits.push("Dodano " + new Date(e.at).toLocaleString("pl-PL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }));
-  bits.push(e.src === "foto" ? "ze zrzutu ekranu" : e.src && e.src !== "manual" ? "z pliku " + String(e.src).toUpperCase() : "wpis ręczny");
+  bits.push(srcInfo(e).long);
   box.append(el("small", "hint", bits.join(" · ")));
   return box;
 }
