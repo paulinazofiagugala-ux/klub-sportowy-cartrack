@@ -4,6 +4,14 @@ Każda zmiana w aplikacji jest tu zapisywana, żeby kolejne sesje (z Claude albo
 
 **Jak dopisywać:** nowa sekcja `## vN – RRRR-MM-DD – krótki tytuł`, pod nią: co się zmieniło dla uczestników, które pliki zmieniono, co trzeba jeszcze sprawdzić. Przy każdej zmianie podbij numer wersji w `index.html` (`styles.css?v=N`, `app.js?v=N`) i w `sw.js` (`CACHE = "ksc-vN"`), inaczej telefony mogą pokazywać starą wersję.
 
+## v12 – 2026-10-06 – Padel, tenis, aerobik, HIIT
+
+- Nowe rodzaje aktywności (bez dystansu, wymagany czas, kalorie liczone z czasu): **HIIT** 10 kcal/min, **Aerobik** 8 kcal/min, **Padel** 7 kcal/min, **Tenis** 8 kcal/min (szacunek dla osoby ok. 70 kg; można wpisać własne kalorie z zegarka).
+- Pojawiają się w formularzu Dodaj, w filtrach rankingu, celach i wyzwaniach.
+- Odczyt zrzutów: „HIIT”, „High Intensity Interval Training”, „Trening interwałowy”, „Tabata” → HIIT (wcześniej HIIT trafiał do Siłowni); „Aerobik”, „Aerobics”, „Step aerobik”, „Zumba” → Aerobik; „Padel” → Padel; „Tenis”/„Tennis” → Tenis. Słowo „Aerobic” celowo pominięte, bo Garmin pokazuje „Aerobic Training Effect” przy biegach. Test: 3 nowe makiety poprawne.
+- Rekord w Rankingu: „Najwięcej kcal naraz” → **„Najwięcej kalorii na raz”**; w odznace „kcal na raz”.
+- Pliki: `app.js` (`TYPES`, napisy), `ocr.js` (`TYPE_WORDS`), `index.html`, `sw.js` (cache `ksc-v12`), `README.md`.
+
 ## v11 – 2026-10-06 – Administrator usuwa uczestnika
 
 - Panel administratora (zakładka Moje) → sekcja „Uczestnicy i administratorzy”: przy każdej osobie (poza sobą) jest przycisk **Usuń**. Po kliknięciu pojawia się czerwone potwierdzenie z liczbą treningów i km do usunięcia oraz przyciski „Usuń na zawsze” / „Anuluj”.

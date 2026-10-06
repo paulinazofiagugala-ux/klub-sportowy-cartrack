@@ -30,7 +30,11 @@ const TYPES = [
   { k: "swim", n: "Pływanie", i: "pool", f: 245, pace: "100m" },
   // aktywności bez dystansu: kalorie szacowane z czasu (kcal na minutę)
   { k: "gym", n: "Siłownia", i: "fitness_center", f: 0, kpm: 6, pace: "none", nodist: true },
-  { k: "yoga", n: "Joga", i: "self_improvement", f: 0, kpm: 3, pace: "none", nodist: true }
+  { k: "yoga", n: "Joga", i: "self_improvement", f: 0, kpm: 3, pace: "none", nodist: true },
+  { k: "hiit", n: "HIIT", i: "exercise", f: 0, kpm: 10, pace: "none", nodist: true },
+  { k: "aerobic", n: "Aerobik", i: "sports_gymnastics", f: 0, kpm: 8, pace: "none", nodist: true },
+  { k: "padel", n: "Padel", i: "sports_tennis", f: 0, kpm: 7, pace: "none", nodist: true },
+  { k: "tennis", n: "Tenis", i: "sports_tennis", f: 0, kpm: 8, pace: "none", nodist: true }
 ];
 const TMAP = Object.fromEntries(TYPES.map(t => [t.k, t]));
 const KCAL_HINT = "Szacowane z dystansu i rodzaju treningu. Możesz wpisać własną wartość, np. z zegarka.";
@@ -214,7 +218,7 @@ function badgesFor(id, recs) {
     return { ...b, on: cur >= b.t, cur };
   });
   recs = recs || clubRecords();
-  if (recs.kcal && recs.kcal.uid === id && +recs.kcal.kcal > 0) list.unshift({ id: "rk", n: "Rekord kalorii klubu", i: "whatshot", on: true, special: true, note: nf0.format(recs.kcal.kcal) + " kcal naraz" });
+  if (recs.kcal && recs.kcal.uid === id && +recs.kcal.kcal > 0) list.unshift({ id: "rk", n: "Rekord kalorii klubu", i: "whatshot", on: true, special: true, note: nf0.format(recs.kcal.kcal) + " kcal na raz" });
   for (const [t, e] of Object.entries(recs.longest)) if (e.uid === id && +e.km > 0) list.unshift({ id: "rl" + t, n: "Najdłuższy: " + TMAP[t].n, i: TMAP[t].i, on: true, special: true, note: nf1.format(e.km) + " km" });
   for (const c of challenges) {
     const r = challengeResult(c);
@@ -375,7 +379,7 @@ function renderRank() {
   }
   const add = (lab, who, txt, uid) => { const s = el("div", "stat"); s.append(el("small", "", lab), el("b", "", who), el("span", "", txt)); clickable(s, uid); rec.append(s); };
   if (longest) add("Najdłuższy dystans", longest.r.nick, nf2.format(longest.e.km) + " km · " + (TMAP[longest.e.t] || TMAP.run).n, longest.r.id);
-  add("Najwięcej kcal naraz", bestKcal.r.nick, nf0.format(bestKcal.e.kcal) + " kcal · " + (TMAP[bestKcal.e.t] || TMAP.run).n, bestKcal.r.id);
+  add("Najwięcej kalorii na raz", bestKcal.r.nick, nf0.format(bestKcal.e.kcal) + " kcal · " + (TMAP[bestKcal.e.t] || TMAP.run).n, bestKcal.r.id);
   add("Najwięcej treningów", mostN.nick, mostN.count + " " + plTren(mostN.count), mostN.id);
   if (longTime) add("Najdłuższy trening", longTime.r.nick, fmtDur(secOf(longTime.e), true) + " · " + (TMAP[longTime.e.t] || TMAP.run).n, longTime.r.id);
   else add("Średnio na osobę", "Cały klub", nf1.format(T.km / rows.length) + " km");

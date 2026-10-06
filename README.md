@@ -10,7 +10,7 @@ Klubowa aplikacja sportowa: rankingi, wyzwania, cele, kalendarz, serie i odznaki
 ## Co potrafi
 
 - **Ranking osób i działów:** tydzień, miesiąc, 7 dni albo cały czas; według dystansu, kalorii, liczby treningów lub czasu; filtr rodzaju aktywności ze średnim tempem. W trybie Działy widać, który dział zebrał najwięcej.
-- **Dodawanie treningu:** ręcznie (czas z dokładnością do setnych sekundy), z pliku GPX, TCX lub FIT albo ze zrzutu ekranu podsumowania treningu (Garmin, Amazfit, Apple Watch, Samsung Health, Strava, Komoot, adidas Running, Whoop). Zdjęcie jest odczytywane w przeglądarce i nigdzie nie jest wysyłane. Rodzaj aktywności jest rozpoznawany z pliku, zdjęcia albo z tempa. Rodzaje: bieg, spacer, nordic walking, rower, rolki, pływanie, siłownia i joga (siłownia i joga bez dystansu, kalorie liczone z czasu).
+- **Dodawanie treningu:** ręcznie (czas z dokładnością do setnych sekundy), z pliku GPX, TCX lub FIT albo ze zrzutu ekranu podsumowania treningu (Garmin, Amazfit, Apple Watch, Samsung Health, Strava, Komoot, adidas Running, Whoop). Zdjęcie jest odczytywane w przeglądarce i nigdzie nie jest wysyłane. Rodzaj aktywności jest rozpoznawany z pliku, zdjęcia albo z tempa. Rodzaje: bieg, spacer, nordic walking, rower, rolki, pływanie oraz bez dystansu (kalorie liczone z czasu): siłownia, joga, HIIT, aerobik, padel i tenis.
 - **Wyzwania:** cel klubu (np. 1000 km w październiku), wyzwanie firmowe, wyzwanie działowe i wirtualny bieg na dystans. Tworzą je administratorzy.
 - **Kalendarz:** własne treningi albo treningi całego klubu oraz trwające wyzwania.
 - **Moje:** seria tygodni z treningiem, cele osobiste, odznaki, średnie tempo, lista treningów i profil z działem.
