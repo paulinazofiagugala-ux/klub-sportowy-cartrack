@@ -135,6 +135,7 @@ textarea{min-height:110px;resize:vertical}
 .drop.over{border-color:var(--orange);background:var(--orange50)}
 .drop .ms{font-size:30px;color:var(--orange)}
 .drop b{font:700 14px var(--f-title);display:block}
+.drop.busy{opacity:.7;pointer-events:none}
 .kcalbox{display:flex;align-items:center;gap:12px;background:var(--blue50);border:1px solid var(--blue);border-radius:12px;padding:10px 12px}
 .kcalbox input{background:var(--surface);max-width:120px;font-weight:700}
 .kcalbox p{margin:0;font-size:12px;color:var(--muted);flex:1;min-width:0}

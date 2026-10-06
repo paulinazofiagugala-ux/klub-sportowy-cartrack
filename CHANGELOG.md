@@ -1,0 +1,34 @@
+# Historia zmian – Klub Sportowy Cartrack
+
+Każda zmiana w aplikacji jest tu zapisywana, żeby kolejne sesje (z Claude albo z inną osobą) wiedziały, co i dlaczego zostało zrobione. Najnowsze wpisy są na górze.
+
+**Jak dopisywać:** nowa sekcja `## vN – RRRR-MM-DD – krótki tytuł`, pod nią: co się zmieniło dla uczestników, które pliki zmieniono, co trzeba jeszcze sprawdzić. Przy każdej zmianie podbij numer wersji w `index.html` (`styles.css?v=N`, `app.js?v=N`) i w `sw.js` (`CACHE = "ksc-vN"`), inaczej telefony mogą pokazywać starą wersję.
+
+## v4 – 2026-10-06 – Odczyt treningu ze zrzutu ekranu
+
+- Nowe pole **„Wgraj zrzut ekranu”** w zakładce Dodaj. Aplikacja odczytuje z obrazka podsumowania treningu: rodzaj aktywności, dystans, czas, kalorie i datę, i wpisuje je do formularza. Uczestnik sprawdza dane i klika Dodaj.
+- Obsługiwane układy: Garmin Connect, Amazfit (Zepp), Apple Watch (Fitness), Strava, Komoot, adidas Running, Whoop; po polsku i angielsku, tryb jasny i ciemny.
+- Rozpoznawanie tekstu działa w przeglądarce uczestnika (Tesseract.js 5.1.1 z cdn.jsdelivr.net, pobierany przy pierwszym użyciu). Zdjęcie nie jest nigdzie wysyłane ani zapisywane.
+- Jeśli czegoś nie da się odczytać (np. Whoop często nie pokazuje dystansu), aplikacja prosi o uzupełnienie tego pola ręcznie. Kalorie bez odczytu są szacowane jak dotąd.
+- W szczegółach treningu źródło pokazuje się jako „ze zrzutu ekranu” (`src: "foto"`).
+- Pliki: nowy `ocr.js`; zmienione `app.js`, `index.html`, `styles.css`, `sw.js` (cache `ksc-v4`, `ocr.js` w SHELL), `README.md`.
+- Do sprawdzenia: odczyt był testowany na 14 makietach ekranów (70/70 pól poprawnie). Potrzebne są prawdziwe zrzuty z każdej z 7 aplikacji, żeby potwierdzić skuteczność i ewentualnie dostroić `ocr.js`.
+
+## v3 – 2026-10-06 – Okresy w rankingu i podgląd aktywności innych
+
+- Ranking: tydzień i miesiąc kalendarzowy ze strzałkami i widocznymi datami oraz nowa opcja „7 dni” (ostatnie 7 dni). Wcześniejsze zgłoszenie „tydzień nie sumuje całości” wynikało z tego, że tydzień liczy się od poniedziałku.
+- Kliknięcie osoby w rankingu lub na podium otwiera jej profil z listą treningów i szczegółami (każdy uczestnik widzi aktywności innych).
+- Pliki: `app.js`, `index.html`, `styles.css`, `sw.js` (cache `ksc-v3`).
+
+## v2 – Pełna wersja klubowa
+
+- Logowanie Google oraz e-mail i hasło (Firebase Auth); dane w Firestore (`people`, `challenges`, `config/departments`, `admins`).
+- Rankingi (kcal, km, liczba treningów, czas), średnie tempo, czas z setnymi sekundy.
+- Import plików GPX, TCX i FIT (`parse.js`), automatyczne rozpoznawanie rodzaju aktywności.
+- Wyzwania: cel klubu, firmowe, działowe, wirtualny bieg; kalendarz; cele osobiste; serie; odznaki.
+- Panel administratora: działy i uprawnienia (super administrator: paulinazofiagugala@gmail.com).
+- Stylistyka Cartrack, logo, instalacja jako aplikacja (PWA), hosting na GitHub Pages.
+
+## v1 – Pierwsza wersja
+
+- Prosty ranking dystansu i kalorii jako artefakt Claude; zastąpiona przez wersję v2 działającą niezależnie od Claude.

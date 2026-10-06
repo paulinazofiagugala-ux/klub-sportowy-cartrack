@@ -3,6 +3,7 @@ import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRe
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 import { parseActivityFile, typeFromSpeed, ymdLocal } from "./parse.js";
+import { ocrImage, parseStatsText } from "./ocr.js";
 
 const SUPER_ADMIN = "paulinazofiagugala@gmail.com";
 const $ = id => document.getElementById(id);
@@ -455,7 +456,8 @@ function updateAddHints() {
   const t = effType();
   if (!kcalTouched) $("a-kcal").value = km > 0 && t ? Math.round(km * TMAP[t].f) : "";
   const det = $("detected");
-  if (fileSrc !== "manual") { det.hidden = false; $("detectedTxt").textContent = "Odczytano z pliku " + fileSrc.toUpperCase() + (autoType ? ": " + TMAP[autoType].n : "") + ". Sprawdź dane i kliknij Dodaj."; }
+  if (fileSrc === "foto") { det.hidden = false; $("detectedTxt").textContent = "Odczytano ze zrzutu ekranu" + (autoType ? ": " + TMAP[autoType].n : "") + ". Sprawdź dane, popraw, jeśli coś się nie zgadza, i kliknij Dodaj."; }
+  else if (fileSrc !== "manual") { det.hidden = false; $("detectedTxt").textContent = "Odczytano z pliku " + fileSrc.toUpperCase() + (autoType ? ": " + TMAP[autoType].n : "") + ". Sprawdź dane i kliknij Dodaj."; }
   else if (autoType && !addType) { det.hidden = false; $("detectedTxt").textContent = "Rozpoznano: " + TMAP[autoType].n + " (na podstawie tempa). Kliknij inny rodzaj, jeśli to coś innego."; }
   else det.hidden = true;
   const pace = t && km > 0 && sec ? fmtPace(t, km, sec) : "";
@@ -464,6 +466,7 @@ function updateAddHints() {
 for (const id of ["a-km", "a-h", "a-m", "a-s", "a-c"]) $(id).addEventListener("input", updateAddHints);
 $("a-kcal").addEventListener("input", () => { kcalTouched = $("a-kcal").value !== ""; });
 function resetAdd() {
+  $("kcalHint").textContent = KCAL_HINT;
   $("a-km").value = ""; setTime(null); $("a-kcal").value = ""; $("a-date").value = today(); $("a-date").max = today();
   addType = null; autoType = null; kcalTouched = false; fileSrc = "manual"; $("a-err").hidden = true; $("a-file").value = ""; updateAddHints();
 }
@@ -485,11 +488,43 @@ async function handleFile(file) {
     const er = $("a-err"); er.textContent = "Nie udało się odczytać pliku. Obsługiwane są pliki GPX, TCX i FIT wyeksportowane z aplikacji sportowej."; er.hidden = false;
   }
 }
+const KCAL_HINT = $("kcalHint").textContent;
 $("a-file").addEventListener("change", e => handleFile(e.target.files[0]));
+async function handleShot(file) {
+  if (!file) return;
+  const zone = $("dropShot"), hint = $("shotHint"), oldHint = hint.textContent, er = $("a-err");
+  zone.classList.add("busy"); er.hidden = true;
+  hint.textContent = "Odczytuję zdjęcie… (za pierwszym razem pobieram moduł rozpoznawania tekstu, to może potrwać kilkanaście sekund)";
+  try {
+    const { text, words } = await ocrImage(file, (status, p) => { if (/recogniz/.test(status)) hint.textContent = "Odczytuję zdjęcie… " + Math.round(p * 100) + "%"; });
+    const r = parseStatsText(text, words);
+    if (!r.km && !r.sec && !r.kcal) throw new Error("nothing-found");
+    fileSrc = "foto"; addType = null;
+    autoType = r.type || typeFromSpeed(r.km, r.sec) || null;
+    $("a-km").value = r.km ? r.km : "";
+    setTime(r.sec ? Math.round(r.sec * 100) / 100 : null);
+    if (r.d) $("a-date").value = r.d > today() ? today() : r.d;
+    if (r.kcal != null) { $("a-kcal").value = r.kcal; kcalTouched = true; } else kcalTouched = false;
+    updateAddHints();
+    $("kcalHint").textContent = r.kcal != null ? "Odczytane ze zrzutu ekranu. Możesz poprawić wartość." : KCAL_HINT;
+    const missing = [!r.km && "dystansu", !r.sec && "czasu", !autoType && "rodzaju aktywności"].filter(Boolean);
+    if (missing.length) { er.textContent = "Nie udało się odczytać: " + missing.join(", ") + ". Uzupełnij " + (missing.length > 1 ? "te pola" : "to pole") + " ręcznie."; er.hidden = false; }
+    toast("Odczytano zrzut ekranu");
+  } catch (e) {
+    console.error(e);
+    er.textContent = e && e.message === "load-failed" ? "Nie udało się pobrać modułu rozpoznawania tekstu. Sprawdź internet i spróbuj ponownie." : "Nie udało się odczytać danych ze zdjęcia. Spróbuj wyraźniejszego zrzutu podsumowania treningu albo wpisz dane ręcznie.";
+    er.hidden = false;
+  } finally { zone.classList.remove("busy"); hint.textContent = oldHint; $("a-shot").value = ""; }
+}
+$("a-shot").addEventListener("change", e => handleShot(e.target.files[0]));
 const drop = $("drop");
 drop.addEventListener("dragover", e => { e.preventDefault(); drop.classList.add("over"); });
 drop.addEventListener("dragleave", () => drop.classList.remove("over"));
-drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("over"); handleFile(e.dataTransfer.files[0]); });
+drop.addEventListener("drop", e => { e.preventDefault(); drop.classList.remove("over"); const f = e.dataTransfer.files[0]; if (f && /^image\//.test(f.type)) handleShot(f); else handleFile(f); });
+const dropShot = $("dropShot");
+dropShot.addEventListener("dragover", e => { e.preventDefault(); dropShot.classList.add("over"); });
+dropShot.addEventListener("dragleave", () => dropShot.classList.remove("over"));
+dropShot.addEventListener("drop", e => { e.preventDefault(); dropShot.classList.remove("over"); handleShot(e.dataTransfer.files[0]); });
 $("addForm").addEventListener("submit", ev => {
   ev.preventDefault();
   const er = $("a-err"); er.hidden = true;
@@ -574,7 +609,7 @@ function actDetail(e) {
   box.append(grid);
   const bits = [];
   if (e.at) bits.push("Dodano " + new Date(e.at).toLocaleString("pl-PL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }));
-  bits.push(e.src && e.src !== "manual" ? "z pliku " + String(e.src).toUpperCase() : "wpis ręczny");
+  bits.push(e.src === "foto" ? "ze zrzutu ekranu" : e.src && e.src !== "manual" ? "z pliku " + String(e.src).toUpperCase() : "wpis ręczny");
   box.append(el("small", "hint", bits.join(" · ")));
   return box;
 }

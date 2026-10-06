@@ -16,7 +16,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Roboto:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,500,0,0&display=block">
-<link rel="stylesheet" href="styles.css?v=3">
+<link rel="stylesheet" href="styles.css?v=4">
 </head>
 <body>
 <div class="wrap">
@@ -103,6 +103,11 @@
         <span class="ms">upload_file</span>
         <span><b>Wgraj plik z treningu</b><span class="hint">GPX, TCX lub FIT z Garmin, Strava, Komoot, Apple Watch (przez HealthFit) i innych. Uzupełnię dane za Ciebie.</span></span>
         <input id="a-file" type="file" accept=".gpx,.tcx,.fit,application/gpx+xml,application/vnd.garmin.tcx+xml" hidden>
+      </label>
+      <label class="drop" id="dropShot" for="a-shot">
+        <span class="ms">photo_camera</span>
+        <span><b>Wgraj zrzut ekranu</b><span class="hint" id="shotHint">Podsumowanie treningu z Garmin, Amazfit, Apple Watch, Strava, Komoot, adidas Running lub Whoop. Zdjęcie jest odczytywane na Twoim urządzeniu i nigdzie nie jest wysyłane.</span></span>
+        <input id="a-shot" type="file" accept="image/*" hidden>
       </label>
       <div class="types" id="types"></div>
       <div class="detected" id="detected" hidden><span class="ms">auto_awesome</span><span id="detectedTxt"></span></div>
@@ -206,6 +211,6 @@
 </div></nav>
 
 <div class="toast" id="toast" hidden></div>
-<script type="module" src="app.js?v=3"></script>
+<script type="module" src="app.js?v=4"></script>
 </body>
 </html>

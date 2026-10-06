@@ -10,7 +10,7 @@ Klubowa aplikacja sportowa: rankingi, wyzwania, cele, kalendarz, serie i odznaki
 ## Co potrafi
 
 - **Ranking:** tydzień, miesiąc albo cały czas; według dystansu, kalorii, liczby treningów lub czasu; filtr rodzaju aktywności ze średnim tempem.
-- **Dodawanie treningu:** ręcznie (czas z dokładnością do setnych sekundy) albo z pliku GPX, TCX lub FIT. Rodzaj aktywności jest rozpoznawany z pliku albo z tempa.
+- **Dodawanie treningu:** ręcznie (czas z dokładnością do setnych sekundy), z pliku GPX, TCX lub FIT albo ze zrzutu ekranu podsumowania treningu (Garmin, Amazfit, Apple Watch, Strava, Komoot, adidas Running, Whoop). Zdjęcie jest odczytywane w przeglądarce i nigdzie nie jest wysyłane. Rodzaj aktywności jest rozpoznawany z pliku, zdjęcia albo z tempa.
 - **Wyzwania:** cel klubu (np. 1000 km w październiku), wyzwanie firmowe, wyzwanie działowe i wirtualny bieg na dystans. Tworzą je administratorzy.
 - **Kalendarz:** własne treningi albo treningi całego klubu oraz trwające wyzwania.
 - **Moje:** seria tygodni z treningiem, cele osobiste, odznaki, średnie tempo, lista treningów i profil z działem.
@@ -30,7 +30,9 @@ Klubowa aplikacja sportowa: rankingi, wyzwania, cele, kalendarz, serie i odznaki
 | `styles.css` | Wygląd w stylistyce Cartrack |
 | `app.js` | Działanie aplikacji: logowanie, rankingi, wyzwania, kalendarz, odznaki |
 | `parse.js` | Odczyt plików GPX, TCX i FIT oraz rozpoznawanie rodzaju aktywności |
+| `ocr.js` | Odczyt danych treningu ze zrzutu ekranu (rozpoznawanie tekstu Tesseract.js) |
 | `firebase-config.js` | Połączenie z projektem Firebase |
+| `CHANGELOG.md` | Historia zmian – dopisuj wpis przy każdej zmianie |
 | `firestore.rules` | Kopia reguł bezpieczeństwa bazy (obowiązujące są w konsoli Firebase → Firestore → Rules) |
 | `manifest.webmanifest`, `sw.js`, `*.png` | Instalacja aplikacji, logo i ikony |
 
