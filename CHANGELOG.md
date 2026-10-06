@@ -4,6 +4,13 @@ Każda zmiana w aplikacji jest tu zapisywana, żeby kolejne sesje (z Claude albo
 
 **Jak dopisywać:** nowa sekcja `## vN – RRRR-MM-DD – krótki tytuł`, pod nią: co się zmieniło dla uczestników, które pliki zmieniono, co trzeba jeszcze sprawdzić. Przy każdej zmianie podbij numer wersji w `index.html` (`styles.css?v=N`, `app.js?v=N`) i w `sw.js` (`CACHE = "ksc-vN"`), inaczej telefony mogą pokazywać starą wersję.
 
+## v9 – 2026-10-06 – Skąd są dane w podsumowaniu
+
+- Kafelki podsumowania w Rankingu (km, kcal, treningi, czas) są klikalne. Otwierają widok „…: skąd są dane” z tymi samymi filtrami (okres, rodzaj aktywności, filtr działu).
+- Widok pokazuje: sumę, podział **według sposobu dodania** (ręcznie / zrzut / plik, z udziałem %) oraz **według osób** (wartość, udział %, dział, liczba treningów i z jakiego źródła). Kliknięcie osoby rozwija jej treningi z tego okresu ze znacznikami źródła i przyciskiem do profilu.
+- Drobna zmiana: czas „1 h 0 min” wyświetla się jako „1 h”.
+- Pliki: `app.js` (`fillTotals`, `rankEntries`, `renderSum`, widok `sum`), `index.html` (`#v-sum`), `styles.css`, `sw.js` (cache `ksc-v9`).
+
 ## v8 – 2026-10-06 – Siłownia i joga
 
 - Nowe rodzaje aktywności: **Siłownia** i **Joga**. Nie mają dystansu: po wybraniu ich pole „Dystans” znika, a wymagany jest czas treningu.

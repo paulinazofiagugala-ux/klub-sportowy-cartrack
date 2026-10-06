@@ -59,7 +59,7 @@ let user = null, me = null, people = {}, myDoc = null, challenges = [], depts = 
 let view = "rank", period = "week", metric = "km", rtype = "all", rmode = "people", deptF = null;
 let addType = null, autoType = null, kcalTouched = false, fileSrc = "manual";
 let calMode = "me", calMonth = new Date(), calSel = null, editingCh = null;
-let pOff = 0, personId = null, prevView = "rank";
+let pOff = 0, personId = null, prevView = "rank", sumMetric = "km", sumOpen = new Set();
 const unsubs = [];
 try { const s = JSON.parse(localStorage.getItem("ksc-ui") || "{}"); period = s.p || period; metric = s.m || metric; rtype = s.t || rtype; rmode = s.r === "dept" ? "dept" : "people"; } catch (e) {}
 const saveUi = () => { try { localStorage.setItem("ksc-ui", JSON.stringify({ p: period, m: metric, t: rtype, r: rmode })); } catch (e) {} };
@@ -98,7 +98,7 @@ function fmtDur(sec, cs) {
   if (cs && c) out += "," + String(c).padStart(2, "0");
   return out;
 }
-function fmtHours(sec) { const h = Math.floor(sec / 3600), m = Math.round(sec % 3600 / 60); return h ? h + " h " + m + " min" : m + " min"; }
+function fmtHours(sec) { const h = Math.floor(sec / 3600), m = Math.round(sec % 3600 / 60); return h ? h + " h" + (m ? " " + m + " min" : "") : m + " min"; }
 function fmtVal(m, v) {
   if (m === "km") return nf1.format(v) + " km";
   if (m === "kcal") return nf0.format(v) + " kcal";
@@ -137,13 +137,13 @@ function progressBar(frac, blue, big) { const b = el("div", "bar" + (blue ? " bl
 function show(v) {
   view = v;
   for (const b of document.querySelectorAll(".tabbar button")) { if (b.dataset.v === v) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); }
-  for (const k of ["rank", "ch", "add", "cal", "me", "person"]) $("v-" + k).hidden = k !== v;
+  for (const k of ["rank", "ch", "add", "cal", "me", "person", "sum"]) $("v-" + k).hidden = k !== v;
   window.scrollTo(0, 0);
   render();
 }
 function setSignedIn(on) {
   $("v-login").hidden = on; $("tabbar").hidden = !on;
-  if (on) show(view); else for (const k of ["rank", "ch", "add", "cal", "me", "person"]) $("v-" + k).hidden = true;
+  if (on) show(view); else for (const k of ["rank", "ch", "add", "cal", "me", "person", "sum"]) $("v-" + k).hidden = true;
 }
 document.querySelectorAll(".tabbar button").forEach(b => b.onclick = () => show(b.dataset.v));
 document.querySelectorAll("#periodSeg button").forEach(b => b.onclick = () => { period = b.dataset.p; pOff = 0; saveUi(); render(); });
@@ -221,6 +221,90 @@ function badgesFor(id, recs) {
 const badgeCount = (id, recs) => badgesFor(id, recs).filter(b => b.on).length;
 
 // ---------- ranking ----------
+const totLabel = k => k === "km" ? "km" : k === "kcal" ? "kcal" : k === "count" ? "Treningi" : "Czas";
+const totText = (k, v) => k === "time" ? nf1.format(v / 3600) + " h" : fmtNum(k, v);
+// Kafelki podsumowania – kliknięcie pokazuje, skąd i od kogo pochodzą dane
+function fillTotals(T) {
+  const tots = $("totals"); tots.replaceChildren();
+  for (const m of METRICS) {
+    const d = el("button", "tot"); d.type = "button"; d.title = "Skąd są te dane?";
+    d.append(icon(m.i), el("b", "", totText(m.k, T[m.k])), el("small", "", totLabel(m.k)));
+    d.onclick = () => { sumMetric = m.k; sumOpen = new Set(); show("sum"); };
+    tots.append(d);
+  }
+}
+// wpisy, które składają się na podsumowanie w rankingu (te same filtry: okres, rodzaj, dział)
+function rankEntries() {
+  const [from, to] = periodRange(period, pOff), out = [];
+  for (const id of Object.keys(people)) {
+    if (rmode === "people" && deptF && (people[id].dept || "") !== deptF) continue;
+    for (const e of entriesOf(id)) if (e.d >= from && e.d <= to && (rtype === "all" || (e.t || "run") === rtype)) out.push({ ...e, uid: id });
+  }
+  return out;
+}
+const SRC_ORDER = ["manual", "screen", "file"];
+const SRC_NAME = { manual: "Ręcznie", screen: "Zrzut", file: "Plik" }, SRC_ICON = { manual: "edit", screen: "photo_camera", file: "upload_file" };
+function renderSum() {
+  const box = $("sumBody"); box.replaceChildren();
+  const m = METRICS.find(x => x.k === sumMetric) || METRICS[0], k = m.k;
+  const es = rankEntries();
+  const total = es.reduce((s, e) => s + val(e, k), 0);
+  const fmt = v => k === "time" ? fmtHours(v) : fmtNum(k, v) + (k === "count" ? "" : " " + unitOf(k));
+  // nagłówek
+  const head = el("div", "card sumhead");
+  const t = el("div", "sumtitle"); t.append(icon(m.i), el("h2", "", m.n + ": skąd są dane"));
+  const filt = [periodLabel(period, pOff)];
+  if (rtype !== "all") filt.push(TMAP[rtype] ? TMAP[rtype].n : rtype);
+  if (rmode === "people" && deptF) filt.push("dział " + deptF);
+  head.append(t, el("div", "sumbig", k === "count" ? total + " " + plTren(total) : fmt(total)), el("div", "sub", filt.join(" · ") + " · " + es.length + " " + plTren(es.length)));
+  // przełącznik miary
+  const chips = el("div", "chips");
+  for (const x of METRICS) { const b = el("button", "chip"); b.type = "button"; b.append(icon(x.i), x.n); b.setAttribute("aria-pressed", x.k === k); b.onclick = () => { sumMetric = x.k; renderSum(); }; chips.append(b); }
+  head.append(chips); box.append(head);
+  if (!es.length) { box.append(el("div", "empty", "W tym okresie nie ma jeszcze treningów.")); return; }
+  // według źródła
+  box.append(el("h3", "sec-title", "Według sposobu dodania"));
+  const bySrc = {}; for (const e of es) { const s = srcInfo(e); const r = bySrc[s.k] = bySrc[s.k] || { s, v: 0, n: 0 }; r.v += val(e, k); r.n++; }
+  const srcGrid = el("div", "srcgrid");
+  for (const sk of SRC_ORDER) {
+    const r = bySrc[sk]; if (!r) continue;
+    const c = el("div", "stat"); const lab = el("small", ""); const tg = el("span", "srctag " + sk); tg.append(icon(SRC_ICON[sk]), document.createTextNode(SRC_NAME[sk])); lab.append(tg);
+    c.append(lab, el("b", "", k === "count" ? r.n + " " + plTren(r.n) : fmt(r.v)), el("span", "", (total ? Math.round(r.v / total * 100) : 0) + "% · " + r.n + " " + plTren(r.n)));
+    srcGrid.append(c);
+  }
+  box.append(srcGrid);
+  // według osób
+  box.append(el("h3", "sec-title", "Według osób"));
+  const byP = {}; for (const e of es) { const r = byP[e.uid] = byP[e.uid] || { id: e.uid, v: 0, es: [], src: {} }; r.v += val(e, k); r.es.push(e); const sk = srcInfo(e).k; r.src[sk] = (r.src[sk] || 0) + 1; }
+  const rows = Object.values(byP).sort((a, b) => b.v - a.v || b.es.length - a.es.length);
+  const list = el("div", "list"); const max = rows[0].v || 1;
+  const SRC_SHORT = { manual: "ręcznie", screen: "ze zrzutu", file: "z pliku" };
+  rows.forEach((r, i) => {
+    const wrap = el("div", "sumrow");
+    const row = el("div", "row clickable"); row.tabIndex = 0; row.setAttribute("role", "button");
+    const open = sumOpen.has(r.id); row.setAttribute("aria-expanded", open);
+    const mid = el("div", "mid"); const nm = el("div", "nm"); nm.append(el("span", "", nickOf(r.id))); if (r.id === me) nm.append(el("span", "tag", "Ty"));
+    const parts = [(people[r.id].dept || "bez działu"), r.es.length + " " + plTren(r.es.length)];
+    for (const sk of SRC_ORDER) if (r.src[sk]) parts.push(r.src[sk] + " " + SRC_SHORT[sk]);
+    mid.append(nm, progressBar(r.v / max, k === "kcal"), el("div", "sub", parts.join(" · ")));
+    const v = el("div", "v", k === "count" ? String(r.es.length) : k === "time" ? fmtHours(r.v) : fmtNum(k, r.v));
+    v.append(el("small", "", (total ? Math.round(r.v / total * 100) : 0) + "%"));
+    row.append(el("div", "pos", String(i + 1)), avatar(r.id, nickOf(r.id)), mid, v);
+    const toggle = () => { sumOpen.has(r.id) ? sumOpen.delete(r.id) : sumOpen.add(r.id); renderSum(); };
+    row.onclick = toggle; row.onkeydown = ev => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); toggle(); } };
+    wrap.append(row);
+    if (open) {
+      const det = el("div", "sumdet");
+      for (const e of r.es.slice().sort((a, b) => b.d.localeCompare(a.d) || (b.at || 0) - (a.at || 0))) det.append(actRow(e, false));
+      const pb = el("button", "btn ghost small"); pb.type = "button"; pb.append(icon("person"), "Profil: " + nickOf(r.id)); pb.onclick = () => openPerson(r.id);
+      det.append(pb); wrap.append(det);
+    }
+    list.append(wrap);
+  });
+  box.append(list);
+  box.append(el("p", "hint", "Kliknij osobę, żeby zobaczyć jej treningi z tego okresu. Znacznik przy treningu mówi, czy wpisano go ręcznie, odczytano ze zrzutu ekranu czy z pliku."));
+}
+$("sumBack").onclick = () => show("rank");
 function renderRank() {
   document.querySelectorAll("#periodSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.p === period));
   const mc = $("metricChips"); mc.replaceChildren();
@@ -248,8 +332,7 @@ function renderRank() {
     for (const k in T) T[k] += r[k];
     rows.push(r);
   }
-  const tots = $("totals"); tots.replaceChildren();
-  for (const m of METRICS) { const d = el("div", "tot"); d.append(icon(m.i), el("b", "", m.k === "time" ? nf1.format(T.time / 3600) + " h" : fmtNum(m.k, T[m.k])), el("small", "", m.k === "km" ? "km" : m.k === "kcal" ? "kcal" : m.k === "count" ? "Treningi" : "Czas")); tots.append(d); }
+  fillTotals(T);
   rows.sort((a, b) => b[metric] - a[metric] || b.count - a.count);
   const pod = $("podium"), list = $("ranklist"), rec = $("records");
   pod.replaceChildren(); list.replaceChildren(); rec.replaceChildren();
@@ -312,8 +395,7 @@ function renderDeptRank(from, to) {
     for (const e of es) { r.km += +e.km || 0; r.kcal += +e.kcal || 0; r.count++; r.time += secOf(e) || 0; }
     r.act.add(id);
   }
-  const tots = $("totals"); tots.replaceChildren();
-  for (const m of METRICS) { const dv = el("div", "tot"); dv.append(icon(m.i), el("b", "", m.k === "time" ? nf1.format(T.time / 3600) + " h" : fmtNum(m.k, T[m.k])), el("small", "", m.k === "km" ? "km" : m.k === "kcal" ? "kcal" : m.k === "count" ? "Treningi" : "Czas")); tots.append(dv); }
+  fillTotals(T);
   const rows = Object.values(by).sort((a, b) => b[metric] - a[metric] || b.count - a.count || a.d.localeCompare(b.d, "pl"));
   if (!rows.length) {
     const e = el("div", "empty"); e.append(icon("groups"), el("b", "", "Nie ma jeszcze działów"), el("span", "", "Administrator dodaje działy w zakładce Moje, a uczestnicy wybierają swój dział w profilu."));
@@ -851,6 +933,7 @@ function render() {
     else if (view === "cal") renderCal();
     else if (view === "me") renderMe();
     else if (view === "person") renderPerson();
+    else if (view === "sum") renderSum();
   } catch (e) { console.error(e); }
 }
 
