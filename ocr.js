@@ -191,7 +191,9 @@ export function parseStatsText(text, words) {
   // dystans
   let km = null; const kmL = find(LABELS.km, l => readKm(l, true));
   if (kmL) { km = kmL.v; found.push("dystans"); if (kmL.dir === -1 || kmL.dir === -2) dirs = [-1, 1, -2, 2]; }
-  else { for (const l of lines) { const v = readKm(l, false); if (v) { km = v; found.push("dystans"); break; } } }
+  // bez etykiety: najpierw wartości z przecinkiem („7,45 km”), liczba całkowita („5 km”) dopiero na końcu – OCR potrafi rozbić dużą liczbę na kawałki
+  let intKm = null;
+  if (!kmL) for (const l of lines) { const m = l.match(RE_KM); if (!m) continue; const v = readKm(l, false); if (!v) continue; if (/[.,]/.test(m[1])) { km = v; found.push("dystans"); break; } if (intKm == null) intKm = v; }
   // duża liczba na górze ekranu (np. "6.55 km" w Amazfit, adidas Running), gdy OCR nie odczytał małego "km"
   if (km == null) {
     let hero = null;
@@ -208,6 +210,7 @@ export function parseStatsText(text, words) {
     }
     if (!hero) for (const l of lines) { const m = l.match(/^(\d{1,3}[.,]\d{1,2})\s*(?:k\S{0,2}|i\S{0,2}|m)?$/); if (m) { hero = { v: num(m[1]) }; break; } }
     if (hero && hero.v > 0) { km = hero.v; found.push("dystans"); }
+    else if (intKm != null) { km = intKm; found.push("dystans"); }
   }
   // czas
   let sec = null; const tL = find(LABELS.time, readTime);
@@ -245,7 +248,8 @@ function loadTesseract() {
 // Powiększenie, skala szarości i odwrócenie ciemnych zrzutów (tryb ciemny) – OCR czyta wtedy dużo lepiej.
 async function prepareImage(file) {
   const bmp = await createImageBitmap(file);
-  const scale = Math.min(2.5, Math.max(1, 1800 / Math.max(bmp.width, bmp.height)));
+  // Powiększamy tylko małe obrazy; zrzuty z telefonu (szerokość ≥ 800 px) zostają w oryginale – po powiększeniu duże cyfry OCR czyta gorzej.
+  const scale = bmp.width < 800 ? Math.min(2, 1100 / bmp.width) : bmp.width > 2200 ? 1600 / bmp.width : 1;
   const w = Math.round(bmp.width * scale), h = Math.round(bmp.height * scale);
   const c = document.createElement("canvas"); c.width = w; c.height = h;
   const g = c.getContext("2d", { willReadFrequently: true });

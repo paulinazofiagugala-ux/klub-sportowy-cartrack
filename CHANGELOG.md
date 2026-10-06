@@ -4,6 +4,12 @@ Każda zmiana w aplikacji jest tu zapisywana, żeby kolejne sesje (z Claude albo
 
 **Jak dopisywać:** nowa sekcja `## vN – RRRR-MM-DD – krótki tytuł`, pod nią: co się zmieniło dla uczestników, które pliki zmieniono, co trzeba jeszcze sprawdzić. Przy każdej zmianie podbij numer wersji w `index.html` (`styles.css?v=N`, `app.js?v=N`) i w `sw.js` (`CACHE = "ksc-vN"`), inaczej telefony mogą pokazywać starą wersję.
 
+## v7 – 2026-10-06 – Lepszy odczyt dużych liczb ze zrzutów
+
+- Test na prawdziwym silniku OCR w przeglądarce pokazał, że duża liczba dystansu (np. „7,45 km” na górze ekranu Samsung Health) po powiększeniu obrazu rozpadała się na kawałki i aplikacja wpisywała 5 km zamiast 7,45 km.
+- Zmiany w `ocr.js`: zrzuty z telefonu (szerokość ≥ 800 px) nie są już powiększane (małe obrazy nadal tak, bardzo duże są zmniejszane), a przy dystansie bez etykiety pierwszeństwo mają wartości z przecinkiem przed liczbami całkowitymi.
+- Pliki: `ocr.js`, `index.html`, `sw.js` (cache `ksc-v7`).
+
 ## v6 – 2026-10-06 – Ranking działów i Samsung Health
 
 - Ranking: nowy przełącznik **Osoby / Działy**. W trybie Działy widać, który dział zebrał najwięcej km, kcal, treningów lub czasu w wybranym okresie (tydzień, miesiąc, 7 dni, cały czas) i dla wybranego rodzaju aktywności. Wynik działu to suma treningów jego członków; przy dziale widać też liczbę aktywnych osób i średnią na osobę. Twój dział jest wyróżniony.
