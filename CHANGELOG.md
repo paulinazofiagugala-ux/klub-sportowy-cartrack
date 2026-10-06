@@ -10,6 +10,7 @@ Każda zmiana w aplikacji jest tu zapisywana, żeby kolejne sesje (z Claude albo
 - Widok pokazuje: sumę, podział **według sposobu dodania** (ręcznie / zrzut / plik, z udziałem %) oraz **według osób** (wartość, udział %, dział, liczba treningów i z jakiego źródła). Kliknięcie osoby rozwija jej treningi z tego okresu ze znacznikami źródła i przyciskiem do profilu.
 - Drobna zmiana: czas „1 h 0 min” wyświetla się jako „1 h”.
 - Pliki: `app.js` (`fillTotals`, `rankEntries`, `renderSum`, widok `sum`), `index.html` (`#v-sum`), `styles.css`, `sw.js` (cache `ksc-v9`).
+- Uwaga: pierwsza publikacja tej wersji utknęła po stronie GitHub Pages (krok „deploy” czekał ponad 30 min). Wdrożenie anulowano i opublikowano ponownie tym wpisem. Jeśli strona się nie zmienia po commicie, sprawdź zakładkę Actions w repozytorium.
 
 ## v8 – 2026-10-06 – Siłownia i joga
 
