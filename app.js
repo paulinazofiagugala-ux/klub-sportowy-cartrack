@@ -65,7 +65,11 @@ try { const s = JSON.parse(localStorage.getItem("ksc-ui") || "{}"); period = s.p
 const saveUi = () => { try { localStorage.setItem("ksc-ui", JSON.stringify({ p: period, m: metric, t: rtype, r: rmode })); } catch (e) {} };
 
 // ---------- helpers ----------
-function toast(t) { const e = $("toast"); e.textContent = t; e.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => e.hidden = true, 2600); }
+function toast(t, undo) {
+  const e = $("toast"); e.replaceChildren(t); e.hidden = false; clearTimeout(toast._t);
+  if (undo) { const b = el("button", "undo", "Cofnij"); b.type = "button"; b.onclick = () => { clearTimeout(toast._t); e.hidden = true; undo(); }; e.append(b); }
+  toast._t = setTimeout(() => e.hidden = true, undo ? 7000 : 2600);
+}
 function showMsg(t) { const m = $("dbmsg"); m.textContent = t || ""; m.hidden = !t; }
 const today = () => ymdLocal(new Date());
 const parseYmd = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
@@ -127,7 +131,7 @@ function allEntries() { const out = []; for (const id of Object.keys(people)) fo
 const isAdmin = () => !!me && ((user && user.email === SUPER_ADMIN && user.emailVerified) || admins.has(me));
 function twoTap(btn, label, action) {
   btn.onclick = () => {
-    if (!btn.classList.contains("arm")) { btn.classList.add("arm"); btn.textContent = "Na pewno?"; setTimeout(() => { btn.classList.remove("arm"); btn.textContent = label; }, 3000); return; }
+    if (!btn.classList.contains("arm")) { const prev = [...btn.childNodes]; btn.classList.add("arm"); btn.textContent = "Na pewno?"; setTimeout(() => { btn.classList.remove("arm"); if (label) btn.textContent = label; else btn.replaceChildren(...prev); }, 3000); return; }
     action();
   };
 }
@@ -703,13 +707,29 @@ function srcInfo(e) {
   return { k: "manual", i: "edit", n: "Ręcznie", long: "wpis ręczny" };
 }
 function srcTag(e) { const s = srcInfo(e); const t = el("span", "srctag " + s.k); t.append(icon(s.i), document.createTextNode(s.n)); t.title = "Dodano " + s.long; return t; }
-function actRow(e, showWho) {
+// Usuwanie własnego treningu – tylko we własnym profilu (zakładka Moje i własny profil); dwa kliknięcia + możliwość cofnięcia
+function deleteEntry(e) {
+  const entries = (myDoc && myDoc.entries) || [];
+  const keep = entries.filter(x => x.id !== e.id); if (keep.length === entries.length) return;
+  const orig = entries.find(x => x.id === e.id);
+  writeMine({ ...myDoc, entries: keep });
+  const what = (TMAP[orig.t] || TMAP.run).n + " z " + fmtDate(orig.d);
+  toast("Usunięto: " + what, () => { if (!(myDoc.entries || []).some(x => x.id === orig.id)) writeMine({ ...myDoc, entries: [...(myDoc.entries || []), orig] }, "Przywrócono trening"); });
+}
+function delBtn(e) {
+  const del = el("button", "del"); del.type = "button"; del.setAttribute("aria-label", "Usuń trening"); del.title = "Usuń trening";
+  del.append(icon("delete"), "Usuń");
+  twoTap(del, null, () => deleteEntry(e));
+  del.addEventListener("click", ev => ev.stopPropagation());
+  return del;
+}
+function actRow(e, showWho, canDel) {
   const r = el("div", "act"); const ic = el("div", "ic"); ic.append(icon((TMAP[e.t] || TMAP.run).i));
   const mid = el("div", "mid"); const tt = el("div", "t", (showWho ? nickOf(e.uid) + " · " : "") + (TMAP[e.t] || TMAP.run).n); tt.append(srcTag(e)); mid.append(tt);
   const s = secOf(e); const bits = [fmtDate(e.d)]; if (s) bits.push(fmtDur(s, true)); const p = fmtPace(e.t, +e.km, s); if (p) bits.push(p);
   mid.append(el("div", "sub", bits.join(" · ")));
   const n = el("div", "n", noDist(e.t) && !(+e.km > 0) ? (s ? fmtHours(s) : "—") : nf2.format(+e.km || 0) + " km"); n.append(el("span", "", nf0.format(+e.kcal || 0) + " kcal"));
-  r.append(ic, mid, n); if (showWho) clickable(r, e.uid); return r;
+  r.append(ic, mid, n); if (canDel && e.uid === me) r.append(delBtn(e)); if (showWho) clickable(r, e.uid); return r;
 }
 function renderCal() {
   document.querySelectorAll("#calSeg button").forEach(b => b.setAttribute("aria-pressed", b.dataset.c === calMode));
@@ -757,7 +777,7 @@ function actDetail(e) {
   const box = el("div", "actd");
   const top = el("div", "top"); const ic = el("div", "ic"); ic.append(icon(t.i));
   const mid = el("div", "mid"); const tt = el("div", "t", t.n); tt.append(srcTag(e)); mid.append(tt, el("div", "sub", fmtDate(e.d, true)));
-  top.append(ic, mid); box.append(top);
+  top.append(ic, mid); if (e.uid === me) top.append(delBtn(e)); box.append(top);
   const grid = el("div", "grid");
   const cell = (lab, v) => { const c = el("div", "cell"); c.append(el("small", "", lab), el("b", "", v)); grid.append(c); };
   cell("Dystans", noDist(e.t) && !(+e.km > 0) ? "—" : nf2.format(+e.km || 0) + " km");
@@ -797,7 +817,7 @@ function renderPerson() {
   box.append(el("h3", "sec-title", "Aktywności (" + es.length + ")"));
   const list = el("div", "list");
   if (!es.length) list.append(el("div", "empty", "Ta osoba nie dodała jeszcze treningów."));
-  for (const e of es.slice(0, 200)) list.append(actDetail(e));
+  for (const e of es.slice(0, 200)) list.append(actDetail({ ...e, uid: id }));
   box.append(list);
 }
 
@@ -855,10 +875,7 @@ function renderMe() {
   const es = mine.slice().sort((a, b) => b.d.localeCompare(a.d) || (b.at || 0) - (a.at || 0));
   if (!es.length) list.append(el("div", "empty", "Po dodaniu treningi pojawią się tutaj."));
   for (const e of es.slice(0, 100)) {
-    const r = actRow(e, false);
-    const del = el("button", "del", "Usuń"); del.type = "button"; del.setAttribute("aria-label", "Usuń trening");
-    twoTap(del, "Usuń", () => writeMine({ ...myDoc, entries: (myDoc.entries || []).filter(x => x.id !== e.id) }, "Usunięto trening"));
-    r.append(del); list.append(r);
+    list.append(actRow({ ...e, uid: me }, false, true));
   }
   // profile & admin
   fillDeptSelect($("m-dept"), myDoc && myDoc.dept);

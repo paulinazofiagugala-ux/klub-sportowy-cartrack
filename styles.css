@@ -151,7 +151,11 @@ button.tot:hover,button.tot:focus-visible{border-color:var(--orange)}
 .act .n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700;font-size:14px}
 .act .n span{display:block;color:var(--muted);font-size:12px;font-weight:500}
 .del{border:0;background:transparent;color:var(--muted);cursor:pointer;padding:6px 8px;border-radius:8px;font:600 12px var(--f-body)}
-.del.arm{background:var(--ink);color:var(--bg)}
+.del.arm{background:#C62828;color:#fff}
+.del{display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
+.del .ms{font-size:17px}
+.toast{display:flex;align-items:center;gap:12px;width:max-content}
+.toast .undo{border:0;background:transparent;color:var(--orange);font:700 14px var(--f-title);cursor:pointer;padding:2px 4px;text-decoration:underline}
 
 /* add form */
 .types{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}

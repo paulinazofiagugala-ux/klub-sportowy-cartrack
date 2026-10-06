@@ -4,6 +4,13 @@ Każda zmiana w aplikacji jest tu zapisywana, żeby kolejne sesje (z Claude albo
 
 **Jak dopisywać:** nowa sekcja `## vN – RRRR-MM-DD – krótki tytuł`, pod nią: co się zmieniło dla uczestników, które pliki zmieniono, co trzeba jeszcze sprawdzić. Przy każdej zmianie podbij numer wersji w `index.html` (`styles.css?v=N`, `app.js?v=N`) i w `sw.js` (`CACHE = "ksc-vN"`), inaczej telefony mogą pokazywać starą wersję.
 
+## v10 – 2026-10-06 – Usuwanie własnych treningów
+
+- Każdy uczestnik może usunąć **tylko swój** trening i **tylko we własnym profilu**: w zakładce Moje (lista treningów) oraz we własnym profilu otwartym z rankingu. W kalendarzu, w widoku „skąd są dane” i w profilach innych osób nie ma przycisku usuwania.
+- Usuwanie: przycisk „Usuń” → „Na pewno?” (drugie kliknięcie w ciągu 3 s). Po usunięciu przez 7 s widać komunikat z przyciskiem **Cofnij**, który przywraca trening.
+- Bezpieczeństwo bez zmian: reguły Firestore pozwalają zapisywać tylko własny dokument `people/{uid}`, więc nie da się usunąć cudzego treningu.
+- Pliki: `app.js` (`deleteEntry`, `delBtn`, `toast` z cofnięciem, `actRow(e, showWho, canDel)`), `styles.css`, `index.html`, `sw.js` (cache `ksc-v10`).
+
 ## v9 – 2026-10-06 – Skąd są dane w podsumowaniu
 
 - Kafelki podsumowania w Rankingu (km, kcal, treningi, czas) są klikalne. Otwierają widok „…: skąd są dane” z tymi samymi filtrami (okres, rodzaj aktywności, filtr działu).
