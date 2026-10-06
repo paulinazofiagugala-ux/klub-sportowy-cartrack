@@ -68,6 +68,8 @@ const LABELS = {
   kcal: ["total kilocalories", "total calories", "laczne kalorie", "calkowite kalorie", "calories", "kalorie", "spalone kalorie", "kalorie spalone", "calories burned", "burned calories", "energy burned", "active kilocalories", "active calories", "aktywne kalorie", "kcal"]
 };
 const TYPE_WORDS = [
+  ["silownia", "gym"], ["trening silowy", "gym"], ["strength training", "gym"], ["strength", "gym"], ["weight training", "gym"], ["weightlifting", "gym"], ["functional strength", "gym"], ["hiit", "gym"], ["crossfit", "gym"], ["gym", "gym"],
+  ["joga", "yoga"], ["yoga", "yoga"],
   ["nordic", "nordic"], ["nordic walking", "nordic"],
   ["plywanie", "swim"], ["swim", "swim"], ["basen", "swim"], ["pool", "swim"],
   ["rolki", "skate"], ["inline", "skate"], ["skating", "skate"],

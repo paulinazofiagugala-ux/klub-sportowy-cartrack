@@ -4,6 +4,15 @@ Każda zmiana w aplikacji jest tu zapisywana, żeby kolejne sesje (z Claude albo
 
 **Jak dopisywać:** nowa sekcja `## vN – RRRR-MM-DD – krótki tytuł`, pod nią: co się zmieniło dla uczestników, które pliki zmieniono, co trzeba jeszcze sprawdzić. Przy każdej zmianie podbij numer wersji w `index.html` (`styles.css?v=N`, `app.js?v=N`) i w `sw.js` (`CACHE = "ksc-vN"`), inaczej telefony mogą pokazywać starą wersję.
 
+## v8 – 2026-10-06 – Siłownia i joga
+
+- Nowe rodzaje aktywności: **Siłownia** i **Joga**. Nie mają dystansu: po wybraniu ich pole „Dystans” znika, a wymagany jest czas treningu.
+- Kalorie są szacowane z czasu: siłownia 6 kcal/min, joga 3 kcal/min (można wpisać własną wartość, np. z zegarka).
+- Na listach zamiast „0 km” widać czas treningu; tempo i rekord „Najdłuższy dystans” pomijają treningi bez dystansu.
+- Ranking i filtry rodzaju aktywności mają nowe pozycje Siłownia i Joga (w rankingu według km mają 0 km; najlepiej porównywać je według kalorii, treningów lub czasu).
+- Odczyt zrzutów rozpoznaje m.in. „Siłownia”, „Trening siłowy”, „Strength Training”, „HIIT”, „CrossFit” (→ Siłownia) oraz „Joga”/„Yoga” (→ Joga). Test na 2 nowych makietach: wszystkie pola poprawne.
+- Pliki: `app.js` (`TYPES`, `noDist`, `estKcal`), `ocr.js`, `index.html` (`#kmWrap`), `sw.js` (cache `ksc-v8`), `README.md`.
+
 ## v7 – 2026-10-06 – Lepszy odczyt dużych liczb ze zrzutów
 
 - Test na prawdziwym silniku OCR w przeglądarce pokazał, że duża liczba dystansu (np. „7,45 km” na górze ekranu Samsung Health) po powiększeniu obrazu rozpadała się na kawałki i aplikacja wpisywała 5 km zamiast 7,45 km.

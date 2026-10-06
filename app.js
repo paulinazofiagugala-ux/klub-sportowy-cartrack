@@ -27,9 +27,16 @@ const TYPES = [
   { k: "nordic", n: "Nordic walking", i: "nordic_walking", f: 55, pace: "km" },
   { k: "bike", n: "Rower", i: "directions_bike", f: 25, pace: "speed" },
   { k: "skate", n: "Rolki", i: "roller_skating", f: 32, pace: "speed" },
-  { k: "swim", n: "Pływanie", i: "pool", f: 245, pace: "100m" }
+  { k: "swim", n: "Pływanie", i: "pool", f: 245, pace: "100m" },
+  // aktywności bez dystansu: kalorie szacowane z czasu (kcal na minutę)
+  { k: "gym", n: "Siłownia", i: "fitness_center", f: 0, kpm: 6, pace: "none", nodist: true },
+  { k: "yoga", n: "Joga", i: "self_improvement", f: 0, kpm: 3, pace: "none", nodist: true }
 ];
 const TMAP = Object.fromEntries(TYPES.map(t => [t.k, t]));
+const KCAL_HINT = "Szacowane z dystansu i rodzaju treningu. Możesz wpisać własną wartość, np. z zegarka.";
+const noDist = t => !!(TMAP[t] && TMAP[t].nodist);
+// szacunek kalorii: z dystansu albo – dla siłowni i jogi – z czasu
+const estKcal = (t, km, sec) => !TMAP[t] ? 0 : TMAP[t].nodist ? (sec > 0 ? Math.round(sec / 60 * TMAP[t].kpm) : 0) : (km > 0 ? Math.round(km * TMAP[t].f) : 0);
 const METRICS = [
   { k: "km", n: "Dystans", i: "route" },
   { k: "kcal", n: "Kalorie", i: "local_fire_department" },
@@ -104,6 +111,7 @@ const unitOf = m => m === "km" ? "km" : m === "kcal" ? "kcal" : m === "count" ? 
 function fmtPace(t, km, sec) {
   if (!(km > 0) || !(sec > 0)) return "";
   const kind = (TMAP[t] || TMAP.run).pace;
+  if (kind === "none") return "";
   if (kind === "speed") return nf1.format(km / (sec / 3600)) + " km/h";
   if (kind === "100m") return fmtDur(sec / (km * 10)) + " /100 m";
   return fmtDur(sec / km) + " /km";
@@ -275,11 +283,11 @@ function renderRank() {
   });
   let longest = null, bestKcal = null, mostN = rows[0], longTime = null;
   for (const r of rows) {
-    for (const e of r.es) { if (!longest || +e.km > +longest.e.km) longest = { r, e }; if (!bestKcal || +e.kcal > +bestKcal.e.kcal) bestKcal = { r, e }; const s = secOf(e); if (s && (!longTime || s > secOf(longTime.e))) longTime = { r, e }; }
+    for (const e of r.es) { if (+e.km > 0 && (!longest || +e.km > +longest.e.km)) longest = { r, e }; if (!bestKcal || +e.kcal > +bestKcal.e.kcal) bestKcal = { r, e }; const s = secOf(e); if (s && (!longTime || s > secOf(longTime.e))) longTime = { r, e }; }
     if (r.count > mostN.count) mostN = r;
   }
   const add = (lab, who, txt, uid) => { const s = el("div", "stat"); s.append(el("small", "", lab), el("b", "", who), el("span", "", txt)); clickable(s, uid); rec.append(s); };
-  add("Najdłuższy dystans", longest.r.nick, nf2.format(longest.e.km) + " km · " + (TMAP[longest.e.t] || TMAP.run).n, longest.r.id);
+  if (longest) add("Najdłuższy dystans", longest.r.nick, nf2.format(longest.e.km) + " km · " + (TMAP[longest.e.t] || TMAP.run).n, longest.r.id);
   add("Najwięcej kcal naraz", bestKcal.r.nick, nf0.format(bestKcal.e.kcal) + " kcal · " + (TMAP[bestKcal.e.t] || TMAP.run).n, bestKcal.r.id);
   add("Najwięcej treningów", mostN.nick, mostN.count + " " + plTren(mostN.count), mostN.id);
   if (longTime) add("Najdłuższy trening", longTime.r.nick, fmtDur(secOf(longTime.e), true) + " · " + (TMAP[longTime.e.t] || TMAP.run).n, longTime.r.id);
@@ -511,7 +519,10 @@ function updateAddHints() {
   if (fileSrc === "manual") autoType = typeFromSpeed(km, sec);
   paintTypes();
   const t = effType();
-  if (!kcalTouched) $("a-kcal").value = km > 0 && t ? Math.round(km * TMAP[t].f) : "";
+  const nd = noDist(t);
+  $("kmWrap").hidden = nd;
+  if (!kcalTouched) { const k = t ? estKcal(t, km, sec) : 0; $("a-kcal").value = k > 0 ? k : ""; }
+  if (fileSrc !== "foto") $("kcalHint").textContent = nd ? "Szacowane z czasu treningu. Możesz wpisać własną wartość, np. z zegarka." : KCAL_HINT;
   const det = $("detected");
   if (fileSrc === "foto") { det.hidden = false; $("detectedTxt").textContent = "Odczytano ze zrzutu ekranu" + (autoType ? ": " + TMAP[autoType].n : "") + ". Sprawdź dane, popraw, jeśli coś się nie zgadza, i kliknij Dodaj."; }
   else if (fileSrc !== "manual") { det.hidden = false; $("detectedTxt").textContent = "Odczytano z pliku " + fileSrc.toUpperCase() + (autoType ? ": " + TMAP[autoType].n : "") + ". Sprawdź dane i kliknij Dodaj."; }
@@ -545,7 +556,6 @@ async function handleFile(file) {
     const er = $("a-err"); er.textContent = "Nie udało się odczytać pliku. Obsługiwane są pliki GPX, TCX i FIT wyeksportowane z aplikacji sportowej."; er.hidden = false;
   }
 }
-const KCAL_HINT = $("kcalHint").textContent;
 $("a-file").addEventListener("change", e => handleFile(e.target.files[0]));
 async function handleShot(file) {
   if (!file) return;
@@ -564,7 +574,7 @@ async function handleShot(file) {
     if (r.kcal != null) { $("a-kcal").value = r.kcal; kcalTouched = true; } else kcalTouched = false;
     updateAddHints();
     $("kcalHint").textContent = r.kcal != null ? "Odczytane ze zrzutu ekranu. Możesz poprawić wartość." : KCAL_HINT;
-    const missing = [!r.km && "dystansu", !r.sec && "czasu", !autoType && "rodzaju aktywności"].filter(Boolean);
+    const missing = [!r.km && !noDist(autoType) && "dystansu", !r.sec && "czasu", !autoType && "rodzaju aktywności"].filter(Boolean);
     if (missing.length) { er.textContent = "Nie udało się odczytać: " + missing.join(", ") + ". Uzupełnij " + (missing.length > 1 ? "te pola" : "to pole") + " ręcznie."; er.hidden = false; }
     toast("Odczytano zrzut ekranu");
   } catch (e) {
@@ -588,13 +598,15 @@ $("addForm").addEventListener("submit", ev => {
   const fail = t => { er.textContent = t; er.hidden = false; };
   const km = numIn("a-km"), sec = timeSec(), t = effType();
   if (!t) return fail("Wybierz rodzaj aktywności.");
-  if (!(km > 0)) return fail("Podaj dystans w km.");
+  const nd = noDist(t);
+  if (!nd && !(km > 0)) return fail("Podaj dystans w km.");
+  if (nd && !(sec > 0)) return fail("Podaj czas treningu.");
   if (numIn("a-m") > 59 || numIn("a-s") > 59) return fail("Minuty i sekundy mogą mieć najwyżej 59.");
-  let kcal = parseInt($("a-kcal").value, 10); if (!(kcal >= 0)) kcal = Math.round(km * TMAP[t].f);
+  let kcal = parseInt($("a-kcal").value, 10); if (!(kcal >= 0)) kcal = estKcal(t, km, sec);
   const d = $("a-date").value || today();
   if (d > today()) return fail("Data nie może być z przyszłości.");
-  const e = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), d, t, km: Math.round(km * 100) / 100, sec: sec ? Math.round(sec * 100) / 100 : null, kcal, src: fileSrc, at: Date.now() };
-  writeMine({ ...myDoc, entries: [...(myDoc.entries || []), e] }, "Dodano: " + nf2.format(e.km) + " km");
+  const e = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), d, t, km: nd ? 0 : Math.round(km * 100) / 100, sec: sec ? Math.round(sec * 100) / 100 : null, kcal, src: fileSrc, at: Date.now() };
+  writeMine({ ...myDoc, entries: [...(myDoc.entries || []), e] }, "Dodano: " + (nd ? TMAP[t].n + ", " + fmtHours(e.sec) : nf2.format(e.km) + " km"));
   resetAdd(); show("rank");
 });
 
@@ -614,7 +626,7 @@ function actRow(e, showWho) {
   const mid = el("div", "mid"); const tt = el("div", "t", (showWho ? nickOf(e.uid) + " · " : "") + (TMAP[e.t] || TMAP.run).n); tt.append(srcTag(e)); mid.append(tt);
   const s = secOf(e); const bits = [fmtDate(e.d)]; if (s) bits.push(fmtDur(s, true)); const p = fmtPace(e.t, +e.km, s); if (p) bits.push(p);
   mid.append(el("div", "sub", bits.join(" · ")));
-  const n = el("div", "n", nf2.format(+e.km || 0) + " km"); n.append(el("span", "", nf0.format(+e.kcal || 0) + " kcal"));
+  const n = el("div", "n", noDist(e.t) && !(+e.km > 0) ? (s ? fmtHours(s) : "—") : nf2.format(+e.km || 0) + " km"); n.append(el("span", "", nf0.format(+e.kcal || 0) + " kcal"));
   r.append(ic, mid, n); if (showWho) clickable(r, e.uid); return r;
 }
 function renderCal() {
@@ -666,7 +678,7 @@ function actDetail(e) {
   top.append(ic, mid); box.append(top);
   const grid = el("div", "grid");
   const cell = (lab, v) => { const c = el("div", "cell"); c.append(el("small", "", lab), el("b", "", v)); grid.append(c); };
-  cell("Dystans", nf2.format(+e.km || 0) + " km");
+  cell("Dystans", noDist(e.t) && !(+e.km > 0) ? "—" : nf2.format(+e.km || 0) + " km");
   cell("Czas", s ? fmtDur(s, true) : "—");
   cell("Tempo", fmtPace(e.t, +e.km, s) || "—");
   cell("Kalorie", nf0.format(+e.kcal || 0) + " kcal");
