@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
-import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
+import { getFirestore, collection, doc, setDoc, updateDoc, arrayUnion, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 import { parseActivityFile, typeFromSpeed, ymdLocal } from "./parse.js";
 import { ocrImage, parseStatsText } from "./ocr.js";
@@ -60,12 +60,12 @@ const nf0 = new Intl.NumberFormat("pl-PL", { maximumFractionDigits: 0 });
 
 // ---------- state ----------
 let user = null, me = null, people = {}, myDoc = null, challenges = [], depts = [], admins = new Set();
-let view = "rank", period = "week", metric = "km", rtype = "all", rmode = "people", deptF = null;
+let view = "rank", period = "month", metric = "km", rtype = "all", rmode = "people", deptF = null;
 let addType = null, autoType = null, kcalTouched = false, fileSrc = "manual";
 let calMode = "me", calMonth = new Date(), calSel = null, editingCh = null;
 let pOff = 0, personId = null, prevView = "rank", sumMetric = "km", sumOpen = new Set();
 const unsubs = [];
-try { const s = JSON.parse(localStorage.getItem("ksc-ui") || "{}"); period = s.p || period; metric = s.m || metric; rtype = s.t || rtype; rmode = s.r === "dept" ? "dept" : "people"; } catch (e) {}
+try { const s = JSON.parse(localStorage.getItem("ksc-ui") || "{}"); period = ["month", "last7", "all"].includes(s.p) ? s.p : period; metric = s.m || metric; rtype = s.t || rtype; rmode = s.r === "dept" ? "dept" : "people"; } catch (e) {}
 const saveUi = () => { try { localStorage.setItem("ksc-ui", JSON.stringify({ p: period, m: metric, t: rtype, r: rmode })); } catch (e) {} };
 
 // ---------- helpers ----------
@@ -132,6 +132,8 @@ function avatar(id, nick) { const d = el("div", "av", initials(nick)); const [b,
 const nickOf = id => String((people[id] && people[id].nick) || "Ktoś").slice(0, 24);
 const entriesOf = id => Array.isArray(people[id] && people[id].entries) ? people[id].entries.filter(e => e && e.d) : [];
 function allEntries() { const out = []; for (const id of Object.keys(people)) for (const e of entriesOf(id)) out.push({ ...e, uid: id }); return out; }
+// Tylko główna administratorka może dodawać treningi za innych uczestników
+const isSuper = () => !!me && !!user && user.email === SUPER_ADMIN && !!user.emailVerified;
 const isAdmin = () => !!me && ((user && user.email === SUPER_ADMIN && user.emailVerified) || admins.has(me));
 function twoTap(btn, label, action) {
   btn.onclick = () => {
@@ -623,7 +625,18 @@ function updateAddHints() {
 }
 for (const id of ["a-km", "a-h", "a-m", "a-s", "a-c"]) $(id).addEventListener("input", updateAddHints);
 $("a-kcal").addEventListener("input", () => { kcalTouched = $("a-kcal").value !== ""; });
+function fillForSelect() {
+  const box = $("forBox"); box.hidden = !isSuper(); if (box.hidden) return;
+  const s = $("a-for"), cur = s.value || me;
+  if (document.activeElement === s) return;
+  s.replaceChildren();
+  const o = el("option", "", "Siebie (" + nickOf(me) + ")"); o.value = me; s.append(o);
+  for (const id of Object.keys(people).filter(x => x !== me).sort((a, b) => nickOf(a).localeCompare(nickOf(b), "pl"))) { const x = el("option", "", nickOf(id) + (people[id].dept ? " · " + people[id].dept : "")); x.value = id; s.append(x); }
+  s.value = people[cur] ? cur : me; $("forHint").hidden = s.value === me;
+}
+$("a-for").addEventListener("change", () => { $("forHint").hidden = $("a-for").value === me; });
 function resetAdd() {
+  if ($("a-for").value && $("a-for").value !== me) { $("a-for").value = me; $("forHint").hidden = true; }
   $("kcalHint").textContent = KCAL_HINT;
   $("a-km").value = ""; setTime(null); $("a-kcal").value = ""; $("a-date").value = today(); $("a-date").max = today();
   addType = null; autoType = null; kcalTouched = false; fileSrc = "manual"; $("a-err").hidden = true; $("a-file").value = ""; updateAddHints();
@@ -696,7 +709,14 @@ $("addForm").addEventListener("submit", ev => {
   const d = $("a-date").value || today();
   if (d > today()) return fail("Data nie może być z przyszłości.");
   const e = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), d, t, km: nd ? 0 : Math.round(km * 100) / 100, sec: sec ? Math.round(sec * 100) / 100 : null, kcal, src: fileSrc, at: Date.now() };
-  writeMine({ ...myDoc, entries: [...(myDoc.entries || []), e] }, "Dodano: " + (nd ? TMAP[t].n + ", " + fmtHours(e.sec) : nf2.format(e.km) + " km"));
+  const what = nd ? TMAP[t].n + ", " + fmtHours(e.sec) : nf2.format(e.km) + " km";
+  const target = isSuper() && $("a-for").value && people[$("a-for").value] ? $("a-for").value : me;
+  if (target !== me) {
+    e.by = me; const who = nickOf(target);
+    updateDoc(doc(fs, "people", target), { entries: arrayUnion(e) }).then(() => toast("Dodano dla " + who + ": " + what)).catch(err => {
+      console.error(err); toast(err && err.code === "permission-denied" ? "Brak uprawnień do dodania treningu innej osobie" : "Nie udało się zapisać. Sprawdź internet i spróbuj ponownie.");
+    });
+  } else writeMine({ ...myDoc, entries: [...(myDoc.entries || []), e] }, "Dodano: " + what);
   resetAdd(); show("rank");
 });
 
@@ -710,7 +730,12 @@ function srcInfo(e) {
   if (e.src && e.src !== "manual") { const x = String(e.src).toUpperCase(); return { k: "file", i: "upload_file", n: "Plik " + x, long: "z pliku " + x }; }
   return { k: "manual", i: "edit", n: "Ręcznie", long: "wpis ręczny" };
 }
-function srcTag(e) { const s = srcInfo(e); const t = el("span", "srctag " + s.k); t.append(icon(s.i), document.createTextNode(s.n)); t.title = "Dodano " + s.long; return t; }
+function srcTag(e) {
+  const s = srcInfo(e); const t = el("span", "srctag " + s.k); t.append(icon(s.i), document.createTextNode(s.n)); t.title = "Dodano " + s.long;
+  if (!e.by || e.by === e.uid) return t;
+  const f = document.createDocumentFragment(), a = el("span", "srctag admin"); a.append(icon("shield_person"), document.createTextNode("Dodane przez: " + nickOf(e.by))); a.title = "Trening dodany przez administratora";
+  f.append(t, a); return f;
+}
 // Usuwanie własnego treningu – tylko we własnym profilu (zakładka Moje i własny profil); dwa kliknięcia + możliwość cofnięcia
 function deleteEntry(e) {
   const entries = (myDoc && myDoc.entries) || [];
@@ -791,7 +816,7 @@ function actDetail(e) {
   box.append(grid);
   const bits = [];
   if (e.at) bits.push("Dodano " + new Date(e.at).toLocaleString("pl-PL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }));
-  bits.push(srcInfo(e).long);
+  bits.push(srcInfo(e).long); if (e.by && e.by !== e.uid) bits.push("dodane przez: " + nickOf(e.by));
   box.append(el("small", "hint", bits.join(" · ")));
   return box;
 }
@@ -968,6 +993,7 @@ function renderForms() {
   $("meCard").hidden = !has;
   fillDeptSelect($("p-dept"), $("p-dept").value);
   $("p-deptWrap").hidden = !depts.length;
+  fillForSelect();
   $("who").hidden = !has; $("whoName").textContent = has ? ("Grasz jako " + myDoc.nick + (myDoc.dept ? " · " + myDoc.dept : "")) : "";
 }
 function render() {

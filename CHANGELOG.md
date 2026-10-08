@@ -4,6 +4,14 @@ Każda zmiana w aplikacji jest tu zapisywana, żeby kolejne sesje (z Claude albo
 
 **Jak dopisywać:** nowa sekcja `## vN – RRRR-MM-DD – krótki tytuł`, pod nią: co się zmieniło dla uczestników, które pliki zmieniono, co trzeba jeszcze sprawdzić. Przy każdej zmianie podbij numer wersji w `index.html` (`styles.css?v=N`, `app.js?v=N`) i w `sw.js` (`CACHE = "ksc-vN"`), inaczej telefony mogą pokazywać starą wersję.
 
+## v13 – 2026-10-08 – Wyróżniony przycisk Dodaj, treningi za innych, bez „Tydzień”
+
+- Dolny pasek: **Dodaj** to teraz duży pomarańczowy okrągły przycisk z białym plusem, uniesiony nad pasek, z cieniem i pogrubionym podpisem. Plus jest rysowany w CSS (nie zależy od czcionki ikon).
+- Ranking: usunięto opcję **Tydzień**; zostały Miesiąc (domyślny), 7 dni i Cały czas. Kto miał zapamiętany „Tydzień”, zobaczy Miesiąc.
+- **Główna administratorka** (paulinazofiagugala@gmail.com) może dodać trening za innego uczestnika: w formularzu Dodaj jest pole „Dodajesz trening dla” (domyślnie „Siebie”; po dodaniu wraca do „Siebie”). Trening dopisuje się do profilu tej osoby atomowo (`arrayUnion`) z polem `by` = uid administratorki i jest oznaczony czarnym znacznikiem „Dodane przez: …”. Ta osoba może go usunąć we własnym profilu.
+- Reguły Firestore: nowa reguła `allow update` dla `isSuperAdmin()` na `people/{uid}`, tylko gdy zmienia się wyłącznie pole `entries` (opublikowana w konsoli i w `firestore.rules`). Zwykli administratorzy tej możliwości nie mają.
+- Pliki: `app.js` (`isSuper`, `fillForSelect`, zapis za innych, `srcTag` z oznaczeniem administratora, okresy), `index.html` (`#forBox`, `.fab`, bez przycisku Tydzień), `styles.css`, `firestore.rules`, `sw.js` (cache `ksc-v13`), `README.md`.
+
 ## v12 – 2026-10-06 – Padel, tenis, aerobik, HIIT
 
 - Nowe rodzaje aktywności (bez dystansu, wymagany czas, kalorie liczone z czasu): **HIIT** 10 kcal/min, **Aerobik** 8 kcal/min, **Padel** 7 kcal/min, **Tenis** 8 kcal/min (szacunek dla osoby ok. 70 kg; można wpisać własne kalorie z zegarka).
